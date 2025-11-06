@@ -12,3 +12,5 @@ count.txt
 .vinxi
 todos.json
 .partykit
+.env.*
+vercel.json
