@@ -1,0 +1,7 @@
+{
+  "name": "workshops-space",
+  "main": "party/main.ts",
+  "compatibilityDate": "2024-01-01",
+  "port": 1999
+}
+
