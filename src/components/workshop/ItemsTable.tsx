@@ -12,6 +12,7 @@ import {
   CaretDownIcon,
   CheckIcon,
   CaretUpDownIcon,
+  DownloadSimpleIcon,
 } from '@phosphor-icons/react'
 import { Select } from '@base-ui-components/react/select'
 import type {
@@ -171,6 +172,40 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
     setSelectedCardId(cardId)
   }
 
+  const handleExportCSV = () => {
+    // Create CSV header
+    const headers = ['Text', 'Posted by', 'Importance', 'Complexity', 'Next action']
+
+    // Create CSV rows
+    const rows = data.map((row) => {
+      const card = room.cards.find((c) => c.id === row.cardId)
+      const nextAction = card?.nextAction || ''
+      const nextActionLabel = nextActionOptions.find((opt) => opt.value === nextAction)?.label || ''
+
+      return [
+        `"${row.title.replace(/"/g, '""')}"`, // Escape quotes in text
+        row.postedBy,
+        toFixed(row.importance, 1),
+        toFixed(row.complexity, 1),
+        nextActionLabel,
+      ].join(',')
+    })
+
+    // Combine header and rows
+    const csv = [headers.join(','), ...rows].join('\n')
+
+    // Create blob and download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `workshop-results-${room.id}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   // Memoize transformed data to prevent unnecessary re-renders
   const data = useMemo<TableRow[]>(
     () =>
@@ -276,6 +311,21 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
               </tr>
             ))}
           </tbody>
+          <tfoot className="bg-foreground/5 border-t border-border">
+            <tr>
+              <td colSpan={table.getAllColumns().length} className="px-2">
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleExportCSV}
+                    className="p-1.5 text-foreground/50 hover:text-foreground clickable"
+                    title="Export to CSV"
+                  >
+                    <DownloadSimpleIcon className="size-4" weight="bold" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
