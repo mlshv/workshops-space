@@ -53,12 +53,12 @@ export function AISummary({ room, connection, isAdmin }: AISummaryProps) {
 
   if (isGenerating && !room.aiSummary) {
     return (
-      <div className="mt-8">
+      <div>
         <div className="flex items-center gap-1 mb-4">
           <SparkleIcon size={24} className="text-purple-600 animate-pulse" />
-          <h3 className="text-lg font-semibold">AI Summary</h3>
+          <h3 className="text-lg font-medium">AI Summary</h3>
         </div>
-        <div className="bg-white border border-gray-200 p-6">
+        <div className="bg-white border border-border p-6">
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
             <p className="text-gray-600">Generating AI insights...</p>
@@ -70,12 +70,12 @@ export function AISummary({ room, connection, isAdmin }: AISummaryProps) {
 
   if (!room.aiSummary) {
     return (
-      <div className="mt-8">
+      <div>
         <div className="flex items-center gap-2 mb-4">
           <SparkleIcon size={24} className="text-purple-600" />
-          <h3 className="text-lg font-semibold">AI Summary</h3>
+          <h3 className="text-lg font-medium">AI Summary</h3>
         </div>
-        <div className="bg-white border border-gray-200 p-6">
+        <div className="bg-white border border-border p-6">
           <p className="text-gray-600 mb-4">
             {isAdmin
               ? 'No AI summary available yet.'
@@ -94,25 +94,21 @@ export function AISummary({ room, connection, isAdmin }: AISummaryProps) {
     )
   }
 
-  const { keyInsights, aiSuggestions, generatedAt } = room.aiSummary
-  const timeAgo = getTimeAgo(generatedAt)
+  const { keyInsights, aiSuggestions, wordCloud, generatedAt } = room.aiSummary
 
   return (
-    <div className="mt-8">
-      <div className="flex items-center justify-between mb-4">
+    <div>
+      <div className="flex gap-2 items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <SparkleIcon size={24} className="text-purple-600" />
-          <h3 className="text-lg font-semibold">AI Summary</h3>
+          <h3 className="text-lg font-medium">AI Summary</h3>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">
-            Generated {timeAgo}
-          </span>
+        <div className="flex flex-col items-end gap-1">
           {isAdmin && (
             <Button
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-purple-600 hover:bg-purple-700 text-xs px-2 py-1"
             >
               {isGenerating ? 'Regenerating...' : 'Regenerate'}
             </Button>
@@ -120,32 +116,61 @@ export function AISummary({ room, connection, isAdmin }: AISummaryProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-3">
+        {/* Word Cloud */}
+        {wordCloud && wordCloud.length > 0 && (
+          <div className="border-border border px-3 py-2">
+            <h4 className="font-medium mb-2">Key Topics</h4>
+            <div className="flex flex-wrap gap-2 items-center justify-center text-center">
+              {[...wordCloud]
+                .sort((a, b) => b.weight - a.weight)
+                .map((item, index) => {
+                  // Calculate font size based on weight (1-10 -> 1rem-3rem)
+                  const fontSize = 1 + (item.weight / 15)
+
+                  return (
+                    <span
+                      key={index}
+                      className="font-medium cursor-default select-none leading-tighter"
+                      style={{
+                        fontSize: `${fontSize}rem`,
+                        lineHeight: 1,
+                      }}
+                      title={`Weight: ${item.weight}/10`}
+                    >
+                      {item.topic}
+                    </span>
+                  )
+                })}
+            </div>
+          </div>
+        )}
+
         {/* Key Insights */}
-        <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 p-6">
-          <h4 className="font-semibold text-purple-900 mb-3">Key Insights</h4>
+        <div className="border-border border px-3 py-2">
+          <h4 className="font-medium mb-2">Key Insights</h4>
           {keyInsights.length > 0 ? (
             <ul className="space-y-2">
               {keyInsights.map((insight, index) => (
-                <li key={index} className="flex gap-2 text-sm text-gray-700">
-                  <span className="text-purple-600 font-medium mt-0.5">•</span>
+                <li key={index} className="flex gap-2 text-sm">
+                  <span className="font-medium mt-0.5">•</span>
                   <span>{insight}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">No insights available</p>
+            <p className="text-sm text-muted-foreground">No insights available</p>
           )}
         </div>
 
         {/* AI Suggestions */}
-        <div className="bg-gradient-to-br from-green-50 to-teal-50 border border-green-200 p-6">
-          <h4 className="font-semibold text-green-900 mb-3">AI Suggestions</h4>
+        <div className="border-border border px-3 py-2">
+          <h4 className="font-medium mb-2">Suggestions</h4>
           {aiSuggestions.length > 0 ? (
             <ul className="space-y-2">
               {aiSuggestions.map((suggestion, index) => (
-                <li key={index} className="flex gap-2 text-sm text-gray-700">
-                  <span className="text-green-600 font-medium mt-0.5">•</span>
+                <li key={index} className="flex gap-2 text-sm">
+                  <span className="font-medium mt-0.5">•</span>
                   <span>{suggestion}</span>
                 </li>
               ))}

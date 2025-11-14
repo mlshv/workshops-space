@@ -11,6 +11,7 @@ import {
 } from '@phosphor-icons/react'
 import { Button } from '../button'
 import { Textarea } from '../textarea'
+import { Checkbox } from '../checkbox'
 
 type ProblemInputProps = {
   currentUser: User
@@ -105,8 +106,15 @@ export default function ProblemInput({
     .filter((card) => card.authorId === currentUser.id)
     .sort((a, b) => b.createdAt - a.createdAt)
 
+  const currentUserState = room.users.find((u) => u.id === currentUser.id)
+  const isReady = currentUserState?.ready || false
+
+  const handleReadyToggle = () => {
+    connection.setReady(currentUser.id, !isReady)
+  }
+
   return (
-    <div className="flex h-full">
+    <div className="flex">
       {/* Main input area */}
       <div className="flex-1 p-6 max-w-2xl mx-auto space-y-4">
         {/* Workshop Title & Description */}
@@ -126,7 +134,7 @@ export default function ProblemInput({
         </div>
 
         {/* Timer Section */}
-        <div className="h-16 flex flex-col justify-center border border-gray-200 p-4">
+        <div className="h-16 flex flex-col justify-center border border-border p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TimerIcon size={20} />
@@ -197,9 +205,28 @@ export default function ProblemInput({
           />
         </div>
 
-        <Button size="lg" onClick={handleSubmit} disabled={!text.trim()}>
-          Add card
-        </Button>
+        <div className="flex gap-3 items-center">
+          <Button size="lg" onClick={handleSubmit} disabled={!text.trim()}>
+            Add card
+          </Button>
+
+          <div
+            className="flex items-center gap-2 cursor-pointer ml-auto"
+            onClick={handleReadyToggle}
+          >
+            <Checkbox
+              id="ready-checkbox"
+              value={isReady}
+              onChange={handleReadyToggle}
+            />
+            <label
+              className="font-medium cursor-pointer select-none"
+              htmlFor="ready-checkbox"
+            >
+              I'm finished
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Cards sidebar */}

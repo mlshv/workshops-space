@@ -69,7 +69,7 @@ const createColumns = (
     header: 'Text',
     cell: (info) => (
       <div
-        className="text-ellipsis overflow-hidden whitespace-nowrap max-w-80 clickable hover:opacity-60"
+        className="text-ellipsis overflow-hidden whitespace-nowrap max-w-40 clickable hover:opacity-60"
         onClick={() => onTextClick(info.row.original.cardId)}
       >
         {info.getValue()}
@@ -113,7 +113,7 @@ const createColumns = (
             connection.setNextAction(cardId, value as NextActionType)
           }
         >
-          <Select.Trigger className="flex w-40 items-center justify-between gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer">
+          <Select.Trigger className="flex w-40 items-center justify-between gap-2 px-3 py-1.5 text-sm bg-white border border-border rounded hover:border-foreground focus:outline-none focus-visible:ring-2 focus:ring-primary focus-visible:border-transparent cursor-pointer">
             <Select.Value />
             <Select.Icon>
               <CaretUpDownIcon size={16} className="text-gray-500" />
@@ -121,7 +121,7 @@ const createColumns = (
           </Select.Trigger>
           <Select.Portal>
             <Select.Positioner sideOffset={4}>
-              <Select.Popup className="bg-white border border-gray-300 rounded shadow-lg py-1 z-50">
+              <Select.Popup className="bg-white border border-border rounded shadow-lg py-1 z-50">
                 <Select.List>
                   {nextActionOptions.map(({ label, value, disabled }) => (
                     <Select.Item
@@ -217,25 +217,25 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
   })
 
   return (
-    <div className="mt-8">
-      <h3 className="text-lg font-semibold mb-4">All Items</h3>
-      <div className="bg-white border border-gray-200 overflow-hidden">
+    <div>
+      <h3 className="text-lg font-medium mb-4">All Items</h3>
+      <div className="bg-white border border-border overflow-hidden">
         <table className="w-full">
-          <thead className=" border-b border-gray-200">
+          <thead className="bg-foreground/5 border-b border-border">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-sm font-medium"
+                    className="px-3 py-2 text-left text-xs font-medium"
                   >
                     {header.isPlaceholder ? null : (
                       <div
-                        className={
-                          header.column.getCanSort()
-                            ? 'flex items-center gap-2 cursor-pointer select-none hover:text-gray-900'
-                            : ''
-                        }
+                        className={cn(
+                          header.column.getCanSort() &&
+                            'flex items-center gap-2 cursor-pointer select-none hover:opacity-60',
+                          'whitespace-nowrap',
+                        )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(
@@ -249,7 +249,7 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
                             ) : header.column.getIsSorted() === 'desc' ? (
                               <CaretDownIcon size={16} weight="fill" />
                             ) : (
-                              <span className="text-gray-400">
+                              <span className="text-muted-foreground">
                                 <CaretUpIcon size={16} />
                               </span>
                             )}
@@ -264,9 +264,12 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-gray-100 hover:">
+              <tr
+                key={row.id}
+                className="border-b border-border hover:bg-foreground/5"
+              >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-1 text-sm">
+                  <td key={cell.id} className="px-3 py-1 text-sm">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -282,6 +285,7 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           onOpenChange={(open) => !open && setSelectedCardId(null)}
           text={selectedCard.card.text}
           authorColor={selectedCardData.authorColor}
+          anonymousVotes={room.anonymousVotes}
           voteData={{
             votes: selectedCard.card.votes,
             users: room.users,

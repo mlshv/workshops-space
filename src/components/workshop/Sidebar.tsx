@@ -1,16 +1,18 @@
-import type { User, Card } from '@/types/workshop'
+import type { User, Card, WorkshopStep } from '@/types/workshop'
 import { Popover } from '@base-ui-components/react/popover'
 import { useState } from 'react'
 import { UserAvatar } from './UserAvatar'
 import type { RoomConnection } from '@/lib/partykit'
 import { Button } from '../button'
-import { GearIcon } from '@phosphor-icons/react'
+import { GearIcon, CheckIcon } from '@phosphor-icons/react'
 
 type SidebarProps = {
   users: User[]
   currentUserId: string
   cards: Card[]
   showVoteProgress?: boolean
+  showReadyStatus?: boolean
+  currentStep?: WorkshopStep
   isAdmin?: boolean
   connection?: RoomConnection
   onLogout?: () => void
@@ -22,6 +24,8 @@ export function Sidebar({
   currentUserId,
   cards,
   showVoteProgress = false,
+  showReadyStatus = false,
+  currentStep,
   isAdmin = false,
   connection,
   onLogout,
@@ -54,7 +58,7 @@ export function Sidebar({
   }
 
   return (
-    <aside className="h-full border-r border-gray-200 py-2 flex flex-col items-center">
+    <aside className="h-full border-r border-border py-2 flex flex-col items-center">
       {users.map((user) => {
         const stats = getUserStats(user.id)
 
@@ -70,8 +74,13 @@ export function Sidebar({
               <div className="relative py-1 px-2">
                 <UserAvatar name={user.name} size="base" />
                 {showVoteProgress && (
-                  <div className="absolute -bottom-1.5 -right-1.5 bg-gray-800 text-white text-xxs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
+                  <div className="absolute -bottom-1 left-6 bg-gray-800 text-white text-xxs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
                     {stats.votedCards}/{stats.totalCards}
+                  </div>
+                )}
+                {showReadyStatus && user.ready && (
+                  <div className="absolute -bottom-1 left-7 bg-green-600 text-white rounded-full p-0.75 shadow-md">
+                    <CheckIcon className="size-3" weight="bold" />
                   </div>
                 )}
               </div>
@@ -103,12 +112,13 @@ export function Sidebar({
                     </Button>
                   )}
                   {isAdmin && user.id !== currentUserId && (
-                    <button
+                    <Button
                       onClick={() => handleRemoveUser(user.id, user.name)}
-                      className="mt-2 w-full flex items-center justify-center gap-1 px-2 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded transition-colors cursor-pointer"
+                      variant="inverse"
+                      className="w-full"
                     >
-                      Kick
-                    </button>
+                      Remove
+                    </Button>
                   )}
                   <Popover.Arrow className="fill-popover" />
                 </Popover.Popup>

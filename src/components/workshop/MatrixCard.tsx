@@ -18,6 +18,7 @@ type MatrixCardProps = {
   isDragging?: boolean
   dragOverlay?: boolean
   resultsMode?: boolean
+  anonymousVotes?: boolean
   voteData?: {
     votes: Vote[]
     users: User[]
@@ -33,6 +34,7 @@ export function MatrixCard({
   score,
   isDragging,
   resultsMode = false,
+  anonymousVotes = false,
   voteData,
   dragOverlay = false,
   zIndex,
@@ -57,7 +59,7 @@ export function MatrixCard({
               onClick={resultsMode ? () => setDialogOpen(true) : undefined}
               className={cn(
                 'MatrixCard relative px-3 py-2 bg-white rounded text-xs w-[12vw] h-[8vw] leading-tight',
-                'overflow-hidden select-none transition-scale duration-200',
+                'overflow-hidden select-none transition-scale duration-200 border-2 border-background',
                 className,
               )}
               style={{ backgroundColor: authorColor }}
@@ -113,6 +115,7 @@ export function MatrixCard({
         onOpenChange={setDialogOpen}
         text={text}
         authorColor={authorColor}
+        anonymousVotes={anonymousVotes}
         voteData={voteData}
       />
     </>

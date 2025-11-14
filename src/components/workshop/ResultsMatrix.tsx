@@ -9,7 +9,10 @@ import { aggregateVotes, type AggregatedScore } from '@/lib/aggregateVotes'
 import { normalize } from '@/lib/normalize'
 import type { RoomConnection } from '@/lib/partykit'
 import { getCardColorFromName } from '@/lib/avatar'
-import { FileLockIcon, LockSimpleIcon } from '@phosphor-icons/react'
+import {
+  calculatePositionFromContainment,
+  CARD_DIMENSIONS,
+} from '@/lib/matrix-position'
 
 type ResultsMatrixProps = {
   room: RoomState
@@ -51,9 +54,6 @@ export default function ResultsMatrix({
   }
 
   const getAuthorColor = (authorId: string): string => {
-    if (room.anonymousVotes) {
-      return 'var(--color-sticky-note-yellow)'
-    }
     const author = room.users.find((u) => u.id === authorId)
     return author
       ? getCardColorFromName(author.name)
@@ -61,13 +61,10 @@ export default function ResultsMatrix({
   }
 
   return (
-    <div className="flex-1 p-6 flex flex-col gap-4 overflow-y-auto">
+    <div className="flex-1 py-6 px-4 flex flex-col gap-4 overflow-y-auto">
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <h2 className="text-4xl font-medium">Results</h2>
-          <FileLockIcon className="size-7" />
-        </div>
-        <div className="text-sm text-gray-600">
+        <h2 className="text-4xl font-medium">Results 🔒</h2>
+        <div className="text-sm text-muted-foreground">
           {positions.length} card{positions.length !== 1 ? 's' : ''} voted on
         </div>
       </div>
@@ -83,7 +80,7 @@ export default function ResultsMatrix({
                 zIndex: getZIndex(pos.card.id, index),
               }}
               onMouseEnter={() => handleCardHover(pos.card.id)}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
+              className="absolute"
             >
               <MatrixCard
                 text={pos.card.text}
@@ -92,6 +89,7 @@ export default function ResultsMatrix({
                   complexity: pos.aggregated.complexity,
                 }}
                 resultsMode={true}
+                anonymousVotes={room.anonymousVotes}
                 voteData={{
                   votes: pos.card.votes,
                   users: room.users,
@@ -105,8 +103,15 @@ export default function ResultsMatrix({
       </div>
 
       <InsightsSection positions={positions} room={room} />
-      <ItemsTable positions={positions} room={room} connection={connection} />
-      <AISummary room={room} connection={connection} isAdmin={isAdmin} />
+
+      <div className="mt-8 flex gap-3">
+        <div className="w-3/4">
+          <ItemsTable positions={positions} room={room} connection={connection} />
+        </div>
+        <div>
+          <AISummary room={room} connection={connection} isAdmin={isAdmin} />
+        </div>
+      </div>
     </div>
   )
 }
@@ -121,16 +126,24 @@ function calculatePositions(cards: Card[]): CardPosition[] {
         return null
       }
 
-      // Convert aggregated scores (1-10) to percentage position (0-100)
-      // Complexity: 1-10 maps to 0-100 left-to-right
-      const x = normalize(aggregated.complexity, 1, 10, 0, 100)
-      // Importance: 1-10 maps to 100-0 top-to-bottom (inverted)
-      const y = 100 - normalize(aggregated.importance, 1, 10, 0, 100)
+      // Convert aggregated scores (1-10) to containment percentages (0-100)
+      const containmentPercentLeft = normalize(aggregated.complexity, 1, 10, 0, 100)
+      // Importance: invert because higher importance = higher on screen (lower y)
+      const containmentPercentTop = 100 - normalize(aggregated.importance, 1, 10, 0, 100)
+
+      // Convert containment percentages to visual position (top-left corner)
+      // This matches the coordinate system used in VotingMatrix
+      const { percentLeft, percentTop } = calculatePositionFromContainment(
+        containmentPercentLeft,
+        containmentPercentTop,
+        CARD_DIMENSIONS.widthPercent,
+        CARD_DIMENSIONS.heightPercent,
+      )
 
       return {
         card,
-        x: Math.max(5, Math.min(95, x)), // Keep cards within visible bounds
-        y: Math.max(5, Math.min(95, y)),
+        x: percentLeft,
+        y: percentTop,
         aggregated,
       }
     })

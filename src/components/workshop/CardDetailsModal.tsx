@@ -12,6 +12,7 @@ type CardDetailsModalProps = {
   onOpenChange: (open: boolean) => void
   text: string
   authorColor?: string
+  anonymousVotes?: boolean
   voteData?: {
     votes: Vote[]
     users: User[]
@@ -24,6 +25,7 @@ export function CardDetailsModal({
   onOpenChange,
   text,
   authorColor = 'var(--color-sticky-note-yellow)',
+  anonymousVotes = false,
   voteData,
 }: CardDetailsModalProps) {
   return (
@@ -152,38 +154,40 @@ export function CardDetailsModal({
                         </div>
 
                         {/* Individual Votes */}
-                        <div>
-                          <h5 className="mb-2">
-                            Votes ({voteData.votes.length})
-                          </h5>
-                          <div className="space-y-2">
-                            {voteData.votes.map((vote) => {
-                              const user = voteData.users.find(
-                                (u) => u.id === vote.userId,
-                              )
-                              return (
-                                <div
-                                  key={vote.userId}
-                                  className="rounded flex items-center gap-2"
-                                >
-                                  <UserAvatar
-                                    name={user?.name || 'Unknown'}
-                                    size="sm"
-                                  />
-                                  <div className="flex-1">
-                                    <div className="text-sm font-medium">
-                                      {user?.name || 'Unknown'}
+                        {!anonymousVotes && (
+                          <div>
+                            <h5 className="mb-2">
+                              Votes ({voteData.votes.length})
+                            </h5>
+                            <div className="space-y-2">
+                              {voteData.votes.map((vote) => {
+                                const user = voteData.users.find(
+                                  (u) => u.id === vote.userId,
+                                )
+                                return (
+                                  <div
+                                    key={vote.userId}
+                                    className="rounded flex items-center gap-2"
+                                  >
+                                    <UserAvatar
+                                      name={user?.name || 'Unknown'}
+                                      size="sm"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium">
+                                        {user?.name || 'Unknown'}
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-gray-600">
+                                      Importance: {toFixed(vote.importance, 1)} • Complexity:{' '}
+                                      {toFixed(vote.complexity, 1)}
                                     </div>
                                   </div>
-                                  <div className="text-xs text-gray-600">
-                                    I: {toFixed(vote.importance, 1)} • C:{' '}
-                                    {toFixed(vote.complexity, 1)}
-                                  </div>
-                                </div>
-                              )
-                            })}
+                                )
+                              })}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )}
 

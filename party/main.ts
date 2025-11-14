@@ -18,12 +18,14 @@ type Message =
   | { type: 'set-timer'; durationMinutes: number }
   | { type: 'clear-timer' }
   | { type: 'update-workshop-info'; workshopTitle?: string; workshopDescription?: string; anonymousVotes?: boolean }
+  | { type: 'set-ready'; userId: string; ready: boolean }
 
 type User = {
   id: string
   name: string
   avatar?: string
   color?: string
+  ready?: boolean
 }
 
 type Vote = {
@@ -52,6 +54,7 @@ type WorkshopStep = 'waiting' | 'input' | 'voting' | 'results'
 type AISummary = {
   keyInsights: string[]
   aiSuggestions: string[]
+  wordCloud: Array<{ topic: string; weight: number }>
   generatedAt: number
 }
 
@@ -158,6 +161,12 @@ export default class Server implements Party.Server {
           if (!state) break
 
           state.step = data.step
+
+          // Reset all users' ready state when changing steps
+          state.users.forEach((user) => {
+            user.ready = false
+          })
+
           await this.room.storage.put('state', state)
           this.room.broadcast(JSON.stringify({ type: 'state', state }))
           break
@@ -291,6 +300,18 @@ export default class Server implements Party.Server {
           this.room.broadcast(JSON.stringify({ type: 'state', state }))
           break
         }
+
+        case 'set-ready': {
+          if (!state) break
+
+          const user = state.users.find((u) => u.id === data.userId)
+          if (user) {
+            user.ready = data.ready
+            await this.room.storage.put('state', state)
+            this.room.broadcast(JSON.stringify({ type: 'state', state }))
+          }
+          break
+        }
       }
     } catch (error) {
       console.error('Error processing message:', error)
@@ -332,15 +353,34 @@ Workshop Data:
 ${JSON.stringify(cardsDataForLLM, null, 2)}
 
 Please analyze this data and provide:
-1. Key Insights: 3-5 important observations about the voting patterns, priorities, and team alignment
-2. AI Suggestions: 3-5 actionable recommendations for the team based on the results
+1. Key Insights: EXACTLY 3 important observations about the voting patterns, priorities, and team alignment
+   - Each insight should be approximately 7 words (never more than 10 words)
+   - Be concise and direct
+2. AI Suggestions: EXACTLY 3 actionable recommendations for the team based on the results
+   - Each suggestion should be approximately 7 words (never more than 10 words)
+   - Be concise and direct
+3. Word Cloud: Extract 5-10 key topics/themes mentioned across all cards with their significance weight (1-10)
 
-IMPORTANT: Use simple, clear language (B1 English level). Avoid complex words and jargon. Write in short, direct sentences.
+IMPORTANT: Use simple, clear language (B1 English level). Avoid complex words and jargon.
+
+CRITICAL:
+- You MUST provide exactly 3 items for keyInsights and aiSuggestions
+- Each bullet point must be SHORT - aim for 7 words, maximum 10 words
+- For wordCloud, provide 5-10 topics
+
+For the word cloud:
+- Extract main topics, themes, or concepts mentioned in the cards
+- Weight represents both frequency and significance (1=low, 10=high)
+- Use concise 1-3 word topics (e.g., "User Experience", "API Performance", "Mobile App")
 
 Respond ONLY with valid JSON in this exact format:
 {
   "keyInsights": ["insight 1", "insight 2", "insight 3"],
-  "aiSuggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
+  "aiSuggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
+  "wordCloud": [
+    { "topic": "Topic Name", "weight": 8 },
+    { "topic": "Another Topic", "weight": 5 }
+  ]
 }`
 
     const { text } = await generateText({
@@ -360,6 +400,7 @@ Respond ONLY with valid JSON in this exact format:
     return {
       keyInsights: parsed.keyInsights || [],
       aiSuggestions: parsed.aiSuggestions || [],
+      wordCloud: parsed.wordCloud || [],
       generatedAt: Date.now(),
     }
   }

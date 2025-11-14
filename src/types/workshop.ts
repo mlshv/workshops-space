@@ -26,6 +26,7 @@ export type User = {
   name: string
   avatar?: string
   color?: string
+  ready?: boolean
 }
 
 export type WorkshopStep = 'waiting' | 'input' | 'voting' | 'results'
@@ -48,6 +49,7 @@ export type Room = {
 export type AISummary = {
   keyInsights: string[]
   aiSuggestions: string[]
+  wordCloud: Array<{ topic: string; weight: number }>
   generatedAt: number
 }
 

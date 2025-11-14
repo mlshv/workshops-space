@@ -12,11 +12,10 @@ import type {
 import WaitingRoom from '@/components/workshop/WaitingRoom'
 import ProblemInput from '@/components/workshop/ProblemInput'
 import ResultsMatrix from '@/components/workshop/ResultsMatrix'
-import VotingMatrix2 from '@/components/workshop/VotingMatrix2'
+import VotingMatrix from '@/components/workshop/VotingMatrix'
 import { Sidebar } from '@/components/workshop/Sidebar'
 import { StagesProgress } from '@/components/workshop/StagesProgress'
 import { SettingsModal } from '@/components/workshop/SettingsModal'
-import { Button } from '@/components/button'
 import { SmallAppleSpinner } from '@/components/small-apple-spinner'
 
 export const Route = createFileRoute('/workshop/$roomId')({
@@ -123,7 +122,7 @@ function WorkshopPage() {
         )
       case 'voting':
         return (
-          <VotingMatrix2
+          <VotingMatrix
             room={roomState}
             currentUser={currentUser}
             onVote={handleVote}
@@ -149,6 +148,8 @@ function WorkshopPage() {
         currentUserId={currentUser.id}
         cards={roomState.cards}
         showVoteProgress={roomState.step === 'voting'}
+        showReadyStatus={roomState.step === 'input'}
+        currentStep={roomState.step}
         isAdmin={isAdmin}
         connection={connection}
         onLogout={handleLogout}

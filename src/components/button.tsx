@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-foreground text-background',
-        inverse: 'bg-background text-foreground border border-border',
+        inverse: 'bg-background text-foreground',
         tile: 'bg-transparent border hover:bg-foreground/5',
       },
       size: {

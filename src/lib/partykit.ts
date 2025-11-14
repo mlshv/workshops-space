@@ -174,6 +174,14 @@ export class RoomConnection {
     })
   }
 
+  setReady(userId: string, ready: boolean) {
+    this.sendMessage({
+      type: 'set-ready',
+      userId,
+      ready,
+    })
+  }
+
   disconnect() {
     if (this.socket) {
       this.socket.close()

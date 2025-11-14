@@ -1,5 +1,44 @@
 import { AnimatePresence, motion } from 'motion/react'
+import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
+
+const checkboxInnerVariants = cva(
+  'relative text-[1em] box-border p-0.5 rounded-[0.5em] border-[0.1em] size-[3em] transition-[background-color,scale] duration-200 ease-[cubic-bezier(0.165,0.84,0.44,1)] active:scale-90',
+  {
+    variants: {
+      variant: {
+        default: '',
+        inverse: '',
+      },
+      checked: {
+        true: '',
+        false: '',
+      },
+    },
+    compoundVariants: [
+      {
+        variant: 'default',
+        checked: true,
+        className: 'bg-foreground border-foreground',
+      },
+      {
+        variant: 'default',
+        checked: false,
+        className: 'bg-foreground/5 border-foreground/20 hover:bg-foreground/10',
+      },
+      {
+        variant: 'inverse',
+        checked: true,
+        className: 'bg-background border-background',
+      },
+      {
+        variant: 'inverse',
+        checked: false,
+        className: 'bg-background/5 border-background/20 hover:bg-background/10',
+      },
+    ],
+  },
+)
 
 type CheckboxProps = {
   id?: string
@@ -10,6 +49,7 @@ type CheckboxProps = {
   duration?: number
   checkSymbol?: 'check' | 'cross'
   size?: 'base' | 'xl'
+  variant?: 'default' | 'inverse'
 }
 
 export const Checkbox = ({
@@ -21,6 +61,7 @@ export const Checkbox = ({
   duration,
   checkSymbol = 'check',
   size = 'base',
+  variant = 'default',
 }: CheckboxProps) => {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -45,15 +86,7 @@ export const Checkbox = ({
       type="button"
     >
       <div
-        className={cn(
-          'relative text-[1em] box-border p-0.5 rounded-[0.5em] border-[0.1em] size-[3em]',
-          'transition-[background-color,scale] duration-200 ease-[cubic-bezier(0.165,0.84,0.44,1)]',
-          value
-            ? 'bg-foreground border-foreground'
-            : 'bg-foreground/5 border-foreground/20',
-          !value && 'hover:bg-foreground/10',
-          'active:scale-90',
-        )}
+        className={checkboxInnerVariants({ variant, checked: value })}
         style={
           color && value
             ? {
@@ -69,7 +102,8 @@ export const Checkbox = ({
       >
         <svg
           className={cn(
-            'absolute text-background transition-all ease-[cubic-bezier(0.165,0.84,0.44,1)] top-[0.4em] left-[0.4em] size-[2em]',
+            'absolute transition-all ease-[cubic-bezier(0.165,0.84,0.44,1)] top-[0.5em] left-[0.5em] size-[2em]',
+            variant === 'inverse' ? 'text-foreground' : 'text-background',
             value ? 'opacity-100 scale-100' : 'opacity-0 scale-0',
           )}
           viewBox="0 0 14 14"
