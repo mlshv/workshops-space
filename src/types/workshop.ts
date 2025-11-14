@@ -25,6 +25,7 @@ export type User = {
   id: string
   name: string
   avatar?: string
+  color?: string
 }
 
 export type WorkshopStep = 'waiting' | 'input' | 'voting' | 'results'
@@ -35,6 +36,13 @@ export type Room = {
   users: User[]
   adminId: string
   step: WorkshopStep
+  inputHeader?: string
+  inputDescription?: string
+  timerEndTime?: number
+  timerDuration?: number
+  workshopTitle?: string
+  workshopDescription?: string
+  anonymousVotes?: boolean
 }
 
 export type AISummary = {

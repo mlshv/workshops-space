@@ -13,11 +13,17 @@ type Message =
   | { type: 'set-next-action'; cardId: string; nextAction: NextAction }
   | { type: 'generate-ai-summary' }
   | { type: 'remove-user'; userId: string }
+  | { type: 'delete-card'; cardId: string }
+  | { type: 'update-input-text'; inputHeader?: string; inputDescription?: string }
+  | { type: 'set-timer'; durationMinutes: number }
+  | { type: 'clear-timer' }
+  | { type: 'update-workshop-info'; workshopTitle?: string; workshopDescription?: string; anonymousVotes?: boolean }
 
 type User = {
   id: string
   name: string
   avatar?: string
+  color?: string
 }
 
 type Vote = {
@@ -56,6 +62,13 @@ type RoomState = {
   adminId: string
   step: WorkshopStep
   aiSummary?: AISummary
+  inputHeader?: string
+  inputDescription?: string
+  timerEndTime?: number
+  timerDuration?: number
+  workshopTitle?: string
+  workshopDescription?: string
+  anonymousVotes?: boolean
 }
 
 export default class Server implements Party.Server {
@@ -79,7 +92,11 @@ export default class Server implements Party.Server {
       switch (data.type) {
         case 'init-room': {
           if (!state) {
-            state = data.state
+            state = {
+              ...data.state,
+              workshopTitle: `Session ${data.state.id}`,
+              workshopDescription: "Welcome to the brainstorming session! Let's collaborate on identifying and prioritizing problems and ideas.",
+            }
             await this.room.storage.put('state', state)
             this.room.broadcast(JSON.stringify({ type: 'state', state }))
           }
@@ -202,6 +219,73 @@ export default class Server implements Party.Server {
           state.cards.forEach((card) => {
             card.votes = card.votes.filter((v) => v.userId !== data.userId)
           })
+
+          await this.room.storage.put('state', state)
+          this.room.broadcast(JSON.stringify({ type: 'state', state }))
+          break
+        }
+
+        case 'delete-card': {
+          if (!state) break
+
+          // Remove the card and all its votes
+          state.cards = state.cards.filter((c) => c.id !== data.cardId)
+
+          await this.room.storage.put('state', state)
+          this.room.broadcast(JSON.stringify({ type: 'state', state }))
+          break
+        }
+
+        case 'update-input-text': {
+          if (!state) break
+
+          if (data.inputHeader !== undefined) {
+            state.inputHeader = data.inputHeader
+          }
+          if (data.inputDescription !== undefined) {
+            state.inputDescription = data.inputDescription
+          }
+
+          await this.room.storage.put('state', state)
+          this.room.broadcast(JSON.stringify({ type: 'state', state }))
+          break
+        }
+
+        case 'set-timer': {
+          if (!state) break
+
+          const durationMs = data.durationMinutes * 60 * 1000
+          state.timerEndTime = Date.now() + durationMs
+          state.timerDuration = data.durationMinutes
+
+          await this.room.storage.put('state', state)
+          this.room.broadcast(JSON.stringify({ type: 'state', state }))
+          break
+        }
+
+        case 'clear-timer': {
+          if (!state) break
+
+          state.timerEndTime = undefined
+          state.timerDuration = undefined
+
+          await this.room.storage.put('state', state)
+          this.room.broadcast(JSON.stringify({ type: 'state', state }))
+          break
+        }
+
+        case 'update-workshop-info': {
+          if (!state) break
+
+          if (data.workshopTitle !== undefined) {
+            state.workshopTitle = data.workshopTitle
+          }
+          if (data.workshopDescription !== undefined) {
+            state.workshopDescription = data.workshopDescription
+          }
+          if (data.anonymousVotes !== undefined) {
+            state.anonymousVotes = data.anonymousVotes
+          }
 
           await this.room.storage.put('state', state)
           this.room.broadcast(JSON.stringify({ type: 'state', state }))

@@ -1,5 +1,5 @@
 import type { AggregatedScore } from '@/lib/aggregateVotes'
-import type { Card } from '@/types/workshop'
+import type { Card, RoomState } from '@/types/workshop'
 import { toFixed } from '@/lib/to-fixed'
 import { MatrixCard } from './MatrixCard'
 import React from 'react'
@@ -9,9 +9,10 @@ type InsightsSectionProps = {
     card: Card
     aggregated: AggregatedScore
   }>
+  room: RoomState
 }
 
-export function InsightsSection({ positions }: InsightsSectionProps) {
+export function InsightsSection({ positions, room }: InsightsSectionProps) {
   // Calculate average importance
   const avgImportance =
     positions.length > 0
@@ -31,41 +32,10 @@ export function InsightsSection({ positions }: InsightsSectionProps) {
     (pos) => pos.aggregated.importance >= 7,
   ).length
 
-  // Find most controversial card (highest disagreement)
-  const DISAGREEMENT_THRESHOLD = 3
-  const mostControversial = positions.reduce<{
-    card: Card | null
-    maxDisagreement: number
-    importanceSpread: number
-    complexitySpread: number
-  }>(
-    (acc, pos) => {
-      const disagreement = Math.max(
-        pos.aggregated.importanceSpread,
-        pos.aggregated.complexitySpread,
-      )
-      if (disagreement > acc.maxDisagreement) {
-        return {
-          card: pos.card,
-          maxDisagreement: disagreement,
-          importanceSpread: pos.aggregated.importanceSpread,
-          complexitySpread: pos.aggregated.complexitySpread,
-        }
-      }
-      return acc
-    },
-    {
-      card: null,
-      maxDisagreement: 0,
-      importanceSpread: 0,
-      complexitySpread: 0,
-    },
-  )
-
   return (
     <div className="mt-8">
       <h3 className="text-lg font-semibold mb-4">Insights</h3>
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <InsightCard
           title="Avg. importance"
           value={toFixed(avgImportance, 1)}
@@ -86,39 +56,6 @@ export function InsightsSection({ positions }: InsightsSectionProps) {
           }
           subtitle={`Importance ≥ 7`}
         />
-        <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col">
-          <div className="text-sm text-gray-600 mb-2">Most controversial</div>
-          {mostControversial.card ? (
-            <>
-              <MatrixCard
-                text={mostControversial.card.text}
-                score={null}
-                resultsMode={true}
-              />
-              <div className="text-xs text-gray-500 mt-2">
-                {mostControversial.importanceSpread >
-                  DISAGREEMENT_THRESHOLD && (
-                  <>
-                    Importance spread:{' '}
-                    {toFixed(mostControversial.importanceSpread, 1)}
-                  </>
-                )}
-                {mostControversial.importanceSpread > DISAGREEMENT_THRESHOLD &&
-                  mostControversial.complexitySpread >
-                    DISAGREEMENT_THRESHOLD && <> • </>}
-                {mostControversial.complexitySpread >
-                  DISAGREEMENT_THRESHOLD && (
-                  <>
-                    Complexity spread:{' '}
-                    {toFixed(mostControversial.complexitySpread, 1)}
-                  </>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="text-base font-bold">None</div>
-          )}
-        </div>
       </div>
     </div>
   )
@@ -141,7 +78,7 @@ function InsightCard({
     <div className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col">
       <div className="text-sm text-gray-600 mb-2">{title}</div>
       <div
-        className={`font-bold mb-1 ${isText ? 'text-base leading-tight' : 'text-3xl'}`}
+        className={`font-medium mb-1 ${isText ? 'text-base leading-tight' : 'text-3xl'}`}
       >
         {value}
       </div>

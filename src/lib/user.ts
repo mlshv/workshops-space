@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
 import type { User } from '@/types/workshop'
+import { getUserColor } from './userColor'
 
 const USER_KEY = 'workshop-user'
 const ADMIN_ROOM_KEY = 'workshop-admin-room'
@@ -10,12 +11,20 @@ export function getUser(): User {
   }
   const stored = localStorage.getItem(USER_KEY)
   if (stored) {
-    return JSON.parse(stored)
+    const user = JSON.parse(stored)
+    // Add color if it doesn't exist (for backwards compatibility)
+    if (!user.color) {
+      user.color = getUserColor(user.id)
+      saveUser(user)
+    }
+    return user
   }
   const name = prompt('Enter your name:') || 'Anonymous'
+  const userId = nanoid()
   const user: User = {
-    id: nanoid(),
+    id: userId,
     name: name.trim() || 'Anonymous',
+    color: getUserColor(userId),
   }
   saveUser(user)
   return user

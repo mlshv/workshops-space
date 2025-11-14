@@ -21,6 +21,7 @@ import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { cn } from '@/lib/utils'
 import { normalize } from '@/lib/normalize'
 import { CheckIcon } from '@phosphor-icons/react'
+import { getCardColorFromName } from '@/lib/avatar'
 
 type VotingMatrixProps = {
   room: RoomState
@@ -83,6 +84,7 @@ export default function VotingMatrix2({
   const [activeCard, setActiveCard] = useState<{
     id: string
     text: string
+    authorId: string
   } | null>(null)
   const [activeScore, setActiveScore] = useState<{
     importance: number
@@ -103,6 +105,14 @@ export default function VotingMatrix2({
   )
 
   const sensors = useSensors(useSensor(PointerSensor))
+
+  const getAuthorColor = (authorId: string): string => {
+    if (room.anonymousVotes) {
+      return 'var(--color-sticky-note-yellow)'
+    }
+    const author = room.users.find((u) => u.id === authorId)
+    return author ? getCardColorFromName(author.name) : 'var(--color-sticky-note-yellow)'
+  }
 
   const restrictToMatrixLayout: Modifier = ({
     over,
@@ -284,13 +294,16 @@ export default function VotingMatrix2({
                 y={isActive ? y : `${vote?.y}%`}
                 score={isActive ? activeScore : (vote ?? null)}
                 zIndex={isActive ? sortedVotedCards.length + 1 : index}
+                authorColor={getAuthorColor(card.authorId)}
               />
             )
           })}
         </MatrixLayout>
 
         <div className="w-[12vw] flex flex-col items-center">
-          <h3 className="font-semibold mb-4 text-center">To be voted on</h3>
+          <h3 className="font-semibold mb-4 text-center">
+            To vote ({votedCards.length}/{cardsWithOptimisticVotes.length})
+          </h3>
           <div className="flex flex-col gap-2 justify-center">
             {availableCards.map((card) => {
               const isActive = card.id === activeCard?.id
@@ -300,13 +313,14 @@ export default function VotingMatrix2({
                   card={card}
                   score={isActive ? activeScore : null}
                   zIndex={201}
+                  authorColor={getAuthorColor(card.authorId)}
                 />
               )
             })}
           </div>
           {availableCards.length === 0 && (
-            <p className="text-gray-600 text-sm text-center">
-              <CheckIcon className="text-green-500 mx-auto mb-2" size={24} />
+            <p className="text-sm text-center">
+              <CheckIcon className="mx-auto mb-2" size={24} />
               All cards have been voted on
             </p>
           )}
@@ -355,14 +369,15 @@ export default function VotingMatrix2({
 }
 
 type DraggableCardProps = {
-  card: { id: string; text: string }
+  card: { id: string; text: string; authorId: string }
   x?: number | string
   y?: number | string
   score: { importance: number; complexity: number } | null
   zIndex?: number
+  authorColor?: string
 }
 
-function DraggableCard({ card, x, y, score, zIndex }: DraggableCardProps) {
+function DraggableCard({ card, x, y, score, zIndex, authorColor }: DraggableCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: card.id,
@@ -392,7 +407,7 @@ function DraggableCard({ card, x, y, score, zIndex }: DraggableCardProps) {
         x !== undefined && y !== undefined && 'absolute',
       )}
     >
-      <MatrixCard text={card.text} score={score} isDragging={isDragging} zIndex={zIndex} />
+      <MatrixCard text={card.text} score={score} isDragging={isDragging} zIndex={zIndex} authorColor={authorColor} />
     </div>
   )
 }

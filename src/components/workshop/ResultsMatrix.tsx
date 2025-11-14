@@ -8,6 +8,8 @@ import { AISummary } from './AISummary'
 import { aggregateVotes, type AggregatedScore } from '@/lib/aggregateVotes'
 import { normalize } from '@/lib/normalize'
 import type { RoomConnection } from '@/lib/partykit'
+import { getCardColorFromName } from '@/lib/avatar'
+import { FileLockIcon, LockSimpleIcon } from '@phosphor-icons/react'
 
 type ResultsMatrixProps = {
   room: RoomState
@@ -22,7 +24,11 @@ type CardPosition = {
   aggregated: AggregatedScore
 }
 
-export default function ResultsMatrix({ room, connection, isAdmin }: ResultsMatrixProps) {
+export default function ResultsMatrix({
+  room,
+  connection,
+  isAdmin,
+}: ResultsMatrixProps) {
   const positions = calculatePositions(room.cards)
   const [hoverOrder, setHoverOrder] = useState<string[]>([])
 
@@ -44,10 +50,23 @@ export default function ResultsMatrix({ room, connection, isAdmin }: ResultsMatr
     return 100 + hoverIndex
   }
 
+  const getAuthorColor = (authorId: string): string => {
+    if (room.anonymousVotes) {
+      return 'var(--color-sticky-note-yellow)'
+    }
+    const author = room.users.find((u) => u.id === authorId)
+    return author
+      ? getCardColorFromName(author.name)
+      : 'var(--color-sticky-note-yellow)'
+  }
+
   return (
     <div className="flex-1 p-6 flex flex-col gap-4 overflow-y-auto">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">Results</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-4xl font-medium">Results</h2>
+          <FileLockIcon className="size-7" />
+        </div>
         <div className="text-sm text-gray-600">
           {positions.length} card{positions.length !== 1 ? 's' : ''} voted on
         </div>
@@ -55,48 +74,37 @@ export default function ResultsMatrix({ room, connection, isAdmin }: ResultsMatr
 
       <div className="min-h-[80vh] flex flex-col">
         <MatrixLayout>
-          {positions.map((pos, index) => {
-            const borderColor = pos.aggregated.hasHighDisagreement
-              ? 'border-orange-400'
-              : 'border-gray-50'
-
-            return (
-              <div
-                key={pos.card.id}
-                style={{
-                  left: `${pos.x}%`,
-                  top: `${pos.y}%`,
-                  zIndex: getZIndex(pos.card.id, index),
+          {positions.map((pos, index) => (
+            <div
+              key={pos.card.id}
+              style={{
+                left: `${pos.x}%`,
+                top: `${pos.y}%`,
+                zIndex: getZIndex(pos.card.id, index),
+              }}
+              onMouseEnter={() => handleCardHover(pos.card.id)}
+              className="absolute -translate-x-1/2 -translate-y-1/2"
+            >
+              <MatrixCard
+                text={pos.card.text}
+                score={{
+                  importance: pos.aggregated.importance,
+                  complexity: pos.aggregated.complexity,
                 }}
-                onMouseEnter={() => handleCardHover(pos.card.id)}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-              >
-                <MatrixCard
-                  text={pos.card.text}
-                  score={{
-                    importance: pos.aggregated.importance,
-                    complexity: pos.aggregated.complexity,
-                  }}
-                  resultsMode={true}
-                  className={`max-w-[200px] border-2 ${borderColor}`}
-                  voteData={{
-                    votes: pos.card.votes,
-                    users: room.users,
-                    aggregated: pos.aggregated,
-                  }}
-                />
-                {pos.aggregated.hasHighDisagreement && (
-                  <div className="absolute -top-2 -right-2 bg-orange-500 text-white text-xxs px-2 py-0.5 rounded-full font-semibold cursor-default select-none">
-                    High disagreement
-                  </div>
-                )}
-              </div>
-            )
-          })}
+                resultsMode={true}
+                voteData={{
+                  votes: pos.card.votes,
+                  users: room.users,
+                  aggregated: pos.aggregated,
+                }}
+                authorColor={getAuthorColor(pos.card.authorId)}
+              />
+            </div>
+          ))}
         </MatrixLayout>
       </div>
 
-      <InsightsSection positions={positions} />
+      <InsightsSection positions={positions} room={room} />
       <ItemsTable positions={positions} room={room} connection={connection} />
       <AISummary room={room} connection={connection} isAdmin={isAdmin} />
     </div>

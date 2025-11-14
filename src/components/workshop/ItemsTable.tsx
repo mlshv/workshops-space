@@ -14,13 +14,20 @@ import {
   CaretUpDownIcon,
 } from '@phosphor-icons/react'
 import { Select } from '@base-ui-components/react/select'
-import type { Card, RoomState, Vote as VoteType, NextAction as NextActionType } from '@/types/workshop'
+import type {
+  Card,
+  RoomState,
+  Vote as VoteType,
+  NextAction as NextActionType,
+} from '@/types/workshop'
 import type { AggregatedScore } from '@/lib/aggregateVotes'
 import { toFixed } from '@/lib/to-fixed'
 import { MatrixCard } from './MatrixCard'
 import { UserAvatar } from './UserAvatar'
 import { cn } from '@/lib/utils'
 import type { RoomConnection } from '@/lib/partykit'
+import { getCardColorFromName } from '@/lib/avatar'
+import { CardDetailsModal } from './CardDetailsModal'
 
 type ItemsTableProps = {
   positions: Array<{
@@ -39,6 +46,7 @@ type TableRow = {
   votes: VoteType[]
   aggregated: AggregatedScore
   cardId: string
+  authorColor?: string
 }
 
 const nextActionOptions = [
@@ -55,20 +63,17 @@ const columnHelper = createColumnHelper<TableRow>()
 const createColumns = (
   room: RoomState,
   connection: RoomConnection,
+  onTextClick: (cardId: string) => void,
 ) => [
   columnHelper.accessor('title', {
-    header: 'Card',
+    header: 'Text',
     cell: (info) => (
-      <MatrixCard
-        text={info.getValue()}
-        score={null}
-        resultsMode={true}
-        voteData={{
-          votes: info.row.original.votes,
-          users: room.users,
-          aggregated: info.row.original.aggregated,
-        }}
-      />
+      <div
+        className="text-ellipsis overflow-hidden whitespace-nowrap max-w-80 clickable hover:opacity-60"
+        onClick={() => onTextClick(info.row.original.cardId)}
+      >
+        {info.getValue()}
+      </div>
     ),
     enableSorting: false,
   }),
@@ -104,7 +109,9 @@ const createColumns = (
         <Select.Root
           items={nextActionOptions}
           value={currentAction}
-          onValueChange={(value) => connection.setNextAction(cardId, value as NextActionType)}
+          onValueChange={(value) =>
+            connection.setNextAction(cardId, value as NextActionType)
+          }
         >
           <Select.Trigger className="flex w-40 items-center justify-between gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer">
             <Select.Value />
@@ -148,6 +155,21 @@ const createColumns = (
 
 export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+
+  const getAuthorColor = (authorId: string): string => {
+    if (room.anonymousVotes) {
+      return 'var(--color-sticky-note-yellow)'
+    }
+    const author = room.users.find((u) => u.id === authorId)
+    return author
+      ? getCardColorFromName(author.name)
+      : 'var(--color-sticky-note-yellow)'
+  }
+
+  const handleTextClick = (cardId: string) => {
+    setSelectedCardId(cardId)
+  }
 
   // Memoize transformed data to prevent unnecessary re-renders
   const data = useMemo<TableRow[]>(
@@ -162,15 +184,26 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           votes: pos.card.votes,
           aggregated: pos.aggregated,
           cardId: pos.card.id,
+          authorColor: getAuthorColor(pos.card.authorId),
         }
       }),
-    [positions, room.users],
+    [positions, room.users, room.anonymousVotes],
   )
 
   const columns = useMemo(
-    () => createColumns(room, connection),
+    () => createColumns(room, connection, handleTextClick),
     [room, connection],
   )
+
+  const selectedCard = useMemo(() => {
+    if (!selectedCardId) return null
+    return positions.find((pos) => pos.card.id === selectedCardId)
+  }, [selectedCardId, positions])
+
+  const selectedCardData = useMemo(() => {
+    if (!selectedCard) return null
+    return data.find((row) => row.cardId === selectedCardId)
+  }, [selectedCard, selectedCardId, data])
 
   const table = useReactTable({
     data,
@@ -188,13 +221,13 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
       <h3 className="text-lg font-semibold mb-4">All Items</h3>
       <div className="bg-white border border-gray-200 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className=" border-b border-gray-200">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-sm font-semibold text-gray-700"
+                    className="px-4 py-3 text-left text-sm font-medium"
                   >
                     {header.isPlaceholder ? null : (
                       <div
@@ -231,12 +264,9 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-gray-100 hover:bg-gray-50"
-              >
+              <tr key={row.id} className="border-b border-gray-100 hover:">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 text-sm text-gray-900">
+                  <td key={cell.id} className="px-4 py-1 text-sm">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -245,6 +275,20 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           </tbody>
         </table>
       </div>
+
+      {selectedCard && selectedCardData && (
+        <CardDetailsModal
+          open={selectedCardId !== null}
+          onOpenChange={(open) => !open && setSelectedCardId(null)}
+          text={selectedCard.card.text}
+          authorColor={selectedCardData.authorColor}
+          voteData={{
+            votes: selectedCard.card.votes,
+            users: room.users,
+            aggregated: selectedCard.aggregated,
+          }}
+        />
+      )}
     </div>
   )
 }

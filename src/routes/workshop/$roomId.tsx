@@ -13,7 +13,11 @@ import WaitingRoom from '@/components/workshop/WaitingRoom'
 import ProblemInput from '@/components/workshop/ProblemInput'
 import ResultsMatrix from '@/components/workshop/ResultsMatrix'
 import VotingMatrix2 from '@/components/workshop/VotingMatrix2'
-import { ParticipantsSidebar } from '@/components/workshop/ParticipantsSidebar'
+import { Sidebar } from '@/components/workshop/Sidebar'
+import { StagesProgress } from '@/components/workshop/StagesProgress'
+import { SettingsModal } from '@/components/workshop/SettingsModal'
+import { Button } from '@/components/button'
+import { SmallAppleSpinner } from '@/components/small-apple-spinner'
 
 export const Route = createFileRoute('/workshop/$roomId')({
   component: WorkshopPage,
@@ -28,6 +32,7 @@ function WorkshopPage() {
   const [connection, setConnection] = useState<ReturnType<
     typeof connectRoom
   > | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   useEffect(() => {
     const user = getUser()
@@ -66,8 +71,9 @@ function WorkshopPage() {
 
   if (!roomState || !connection || !currentUser) {
     return (
-      <div className="p-6">
-        <p>Connecting to room...</p>
+      <div className="flex flex-col items-center justify-center gap-2 h-screen p-6">
+        <SmallAppleSpinner className="size-6" />
+        <p className="text-sm text-muted-foreground">Connecting to session...</p>
       </div>
     )
   }
@@ -80,51 +86,40 @@ function WorkshopPage() {
     connection.addVote(vote)
   }
 
-  const getNextStep = (currentStep: WorkshopStep): WorkshopStep | null => {
-    const steps: WorkshopStep[] = ['waiting', 'input', 'voting', 'results']
-    const currentIndex = steps.indexOf(currentStep)
-    return currentIndex < steps.length - 1 ? steps[currentIndex + 1] : null
-  }
-
-  const getPreviousStep = (currentStep: WorkshopStep): WorkshopStep | null => {
-    const steps: WorkshopStep[] = ['waiting', 'input', 'voting', 'results']
-    const currentIndex = steps.indexOf(currentStep)
-    return currentIndex > 0 ? steps[currentIndex - 1] : null
-  }
-
-  const handleNextStep = () => {
-    const nextStep = getNextStep(roomState.step)
-    if (nextStep) {
-      connection.setStep(nextStep)
-    }
-  }
-
-  const handlePreviousStep = () => {
-    const prevStep = getPreviousStep(roomState.step)
-    if (prevStep) {
-      connection.setStep(prevStep)
-    }
-  }
-
-  const handleResetVotes = () => {
-    if (confirm('Are you sure you want to reset all votes?')) {
-      connection.resetVotes()
-    }
-  }
-
   const handleLogout = () => {
     disconnectRoom(roomId)
     logout()
     navigate({ to: '/' })
   }
 
+  const handleStepClick = (step: WorkshopStep) => {
+    if (isAdmin) {
+      connection.setStep(step)
+    }
+  }
+
   const renderStep = () => {
     switch (roomState.step) {
       case 'waiting':
-        return <WaitingRoom room={roomState} currentUser={currentUser} />
+        return (
+          <WaitingRoom
+            room={roomState}
+            currentUser={currentUser}
+            connection={connection}
+            isAdmin={isAdmin}
+            onSettingsClick={() => setSettingsOpen(true)}
+          />
+        )
       case 'input':
         return (
-          <ProblemInput currentUser={currentUser} onSubmit={handleCardSubmit} />
+          <ProblemInput
+            currentUser={currentUser}
+            room={roomState}
+            connection={connection}
+            isAdmin={isAdmin}
+            onSubmit={handleCardSubmit}
+            onSettingsClick={() => setSettingsOpen(true)}
+          />
         )
       case 'voting':
         return (
@@ -135,77 +130,56 @@ function WorkshopPage() {
           />
         )
       case 'results':
-        return <ResultsMatrix room={roomState} connection={connection} isAdmin={isAdmin} />
+        return (
+          <ResultsMatrix
+            room={roomState}
+            connection={connection}
+            isAdmin={isAdmin}
+          />
+        )
       default:
         return <div>Unknown step: {roomState.step}</div>
     }
   }
 
-  const nextStep = getNextStep(roomState.step)
-  const prevStep = getPreviousStep(roomState.step)
-
   return (
     <div className="h-screen flex">
-      <ParticipantsSidebar
+      <Sidebar
         users={roomState.users}
         currentUserId={currentUser.id}
         cards={roomState.cards}
         showVoteProgress={roomState.step === 'voting'}
         isAdmin={isAdmin}
         connection={connection}
+        onLogout={handleLogout}
+        onSettingsClick={() => setSettingsOpen(true)}
       />
       <div className="w-full h-full">
-        <header className="h-[4rem] border-b px-4 py-2 bg-gray-50">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="font-bold">room {roomId}</h1>
-              <p className="text-sm text-gray-600">
-                {currentUser.name}
-                {isAdmin && ' (Admin)'}
-                {' · '}
-                <button
-                  onClick={handleLogout}
-                  className="text-blue-500 hover:text-blue-700 underline cursor-pointer"
-                >
-                  logout
-                </button>
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-gray-600">
-                stage: <strong>{roomState.step}</strong>
-              </div>
-              {isAdmin && (
-                <div className="flex gap-2">
-                  {prevStep && (
-                    <button
-                      onClick={handlePreviousStep}
-                      className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
-                    >
-                      Previous
-                    </button>
-                  )}
-                  {nextStep && (
-                    <button
-                      onClick={handleNextStep}
-                      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                    >
-                      Next
-                    </button>
-                  )}
-                  <button
-                    onClick={handleResetVotes}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                  >
-                    Reset votes
-                  </button>
-                </div>
-              )}
-            </div>
+        <header className="h-[3rem] flex flex-col justify-center border-b px-4 py-2 ">
+          <div className="flex justify-between items-center w-full">
+            <h1 className="font-medium">
+              {roomState.workshopTitle?.trim() || `Session ${roomState.id}`}
+            </h1>
+
+            <StagesProgress
+              currentStep={roomState.step}
+              isAdmin={isAdmin}
+              onStepClick={handleStepClick}
+            />
           </div>
         </header>
-        <div className="h-[calc(100vh-4rem)]">{renderStep()}</div>
+        <div className="h-[calc(100vh-3rem)] overflow-y-auto">
+          {renderStep()}
+        </div>
       </div>
+
+      <SettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        room={roomState}
+        connection={connection}
+        isAdmin={isAdmin}
+      />
     </div>
   )
 }

@@ -3,25 +3,30 @@ import { Popover } from '@base-ui-components/react/popover'
 import { useState } from 'react'
 import { UserAvatar } from './UserAvatar'
 import type { RoomConnection } from '@/lib/partykit'
-import { XIcon } from '@phosphor-icons/react'
+import { Button } from '../button'
+import { GearIcon } from '@phosphor-icons/react'
 
-type ParticipantsSidebarProps = {
+type SidebarProps = {
   users: User[]
   currentUserId: string
   cards: Card[]
   showVoteProgress?: boolean
   isAdmin?: boolean
   connection?: RoomConnection
+  onLogout?: () => void
+  onSettingsClick?: () => void
 }
 
-export function ParticipantsSidebar({
+export function Sidebar({
   users,
   currentUserId,
   cards,
   showVoteProgress = false,
   isAdmin = false,
   connection,
-}: ParticipantsSidebarProps) {
+  onLogout,
+  onSettingsClick,
+}: SidebarProps) {
   const [tooltipUserId, setTooltipUserId] = useState<string | null>(null)
 
   // Calculate stats for each user
@@ -49,7 +54,7 @@ export function ParticipantsSidebar({
   }
 
   return (
-    <aside className="h-full overflow-y-auto bg-gray-50 border-r border-gray-200 py-3 px-2 flex flex-col items-center gap-2">
+    <aside className="h-full border-r border-gray-200 py-2 flex flex-col items-center">
       {users.map((user) => {
         const stats = getUserStats(user.id)
 
@@ -62,7 +67,7 @@ export function ParticipantsSidebar({
             onOpenChange={(open) => setTooltipUserId(open ? user.id : null)}
           >
             <Popover.Trigger className="cursor-default">
-              <div className="relative">
+              <div className="relative py-1 px-2">
                 <UserAvatar name={user.name} size="base" />
                 {showVoteProgress && (
                   <div className="absolute -bottom-1.5 -right-1.5 bg-gray-800 text-white text-xxs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
@@ -72,19 +77,31 @@ export function ParticipantsSidebar({
               </div>
             </Popover.Trigger>
             <Popover.Portal>
-              <Popover.Positioner sideOffset={8} side="right" className="z-[300]">
-                <Popover.Popup className="px-3 py-2 bg-gray-800 text-white text-sm rounded shadow-lg">
-                  <div className="font-semibold mb-1">
+              <Popover.Positioner
+                sideOffset={-4}
+                side="right"
+                align="start"
+                className="z-[300]"
+              >
+                <Popover.Popup className="flex flex-col gap-2 px-3 py-2 bg-popover text-popover-foreground text-sm rounded shadow-lg">
+                  <div className="font-semibold">
                     {user.name}
                     {user.id === currentUserId && ' (you)'}
                   </div>
-                  <div className="text-xs text-gray-300">
-                    Added: {stats.addedCards} card
-                    {stats.addedCards !== 1 ? 's' : ''}
+                  <div className="text-xs">
+                    <div>
+                      Added: {stats.addedCards} card
+                      {stats.addedCards !== 1 ? 's' : ''}
+                    </div>
+                    <div>
+                      Voted: {stats.votedCards}/{stats.totalCards}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-300">
-                    Voted: {stats.votedCards}/{stats.totalCards}
-                  </div>
+                  {user.id === currentUserId && onLogout && (
+                    <Button variant="inverse" onClick={onLogout}>
+                      Logout
+                    </Button>
+                  )}
                   {isAdmin && user.id !== currentUserId && (
                     <button
                       onClick={() => handleRemoveUser(user.id, user.name)}
@@ -93,13 +110,22 @@ export function ParticipantsSidebar({
                       Kick
                     </button>
                   )}
-                  <Popover.Arrow className="fill-gray-800" />
+                  <Popover.Arrow className="fill-popover" />
                 </Popover.Popup>
               </Popover.Positioner>
             </Popover.Portal>
           </Popover.Root>
         )
       })}
+
+      {isAdmin && (
+        <button
+          className="mt-auto p-2 text-foreground/50 hover:text-foreground clickable"
+          onClick={onSettingsClick}
+        >
+          <GearIcon className="size-7" weight="fill" />
+        </button>
+      )}
     </aside>
   )
 }

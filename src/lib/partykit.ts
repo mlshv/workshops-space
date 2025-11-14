@@ -1,5 +1,12 @@
 import PartySocket from 'partysocket'
-import type { RoomState, Card, Vote, User, WorkshopStep, NextAction } from '@/types/workshop'
+import type {
+  RoomState,
+  Card,
+  Vote,
+  User,
+  WorkshopStep,
+  NextAction,
+} from '@/types/workshop'
 
 const PARTYKIT_HOST = import.meta.env.VITE_PARTYKIT_HOST || 'localhost:1999'
 
@@ -128,6 +135,45 @@ export class RoomConnection {
     })
   }
 
+  deleteCard(cardId: string) {
+    this.sendMessage({
+      type: 'delete-card',
+      cardId,
+    })
+  }
+
+  updateInputText(inputHeader?: string, inputDescription?: string) {
+    this.sendMessage({
+      type: 'update-input-text',
+      inputHeader,
+      inputDescription,
+    })
+  }
+
+  setTimer(durationMinutes: number) {
+    this.sendMessage({
+      type: 'set-timer',
+      durationMinutes,
+    })
+  }
+
+  clearTimer() {
+    this.sendMessage({
+      type: 'clear-timer',
+    })
+  }
+
+  updateWorkshopInfo(info: {
+    workshopTitle?: string
+    workshopDescription?: string
+    anonymousVotes?: boolean
+  }) {
+    this.sendMessage({
+      type: 'update-workshop-info',
+      ...info,
+    })
+  }
+
   disconnect() {
     if (this.socket) {
       this.socket.close()
@@ -178,4 +224,3 @@ export function disconnectRoom(roomId: string): void {
     connections.delete(roomId)
   }
 }
-
