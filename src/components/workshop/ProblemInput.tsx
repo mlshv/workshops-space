@@ -116,11 +116,11 @@ export default function ProblemInput({
   return (
     <div className="flex">
       {/* Main input area */}
-      <div className="flex-1 p-6 max-w-2xl mx-auto space-y-4">
+      <div className="flex-1 p-6 max-w-2xl mx-auto flex flex-col gap-6">
         {/* Workshop Title & Description */}
         <div className="space-y-2">
           <div className="flex items-center gap-1">
-            <h2 className="text-4xl font-medium">{displayTitle}</h2>
+            <h2 className="text-2xl font-medium">{displayTitle}</h2>
             {isAdmin && onSettingsClick && (
               <button
                 className="p-1 text-foreground/50 hover:text-foreground clickable"
@@ -130,11 +130,11 @@ export default function ProblemInput({
               </button>
             )}
           </div>
-          <p className="text-xl">{displayDescription}</p>
+          <p>{displayDescription}</p>
         </div>
 
         {/* Timer Section */}
-        <div className="h-16 flex flex-col justify-center border border-border p-4">
+        <div className="h-14 flex flex-col justify-center border border-border p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <TimerIcon size={20} />
@@ -203,28 +203,28 @@ export default function ProblemInput({
             placeholder="Enter your problem or idea... (Ctrl/Cmd + Enter to submit)"
             className="min-h-[8rem] resize-y"
           />
-        </div>
 
-        <div className="flex gap-3 items-center">
-          <Button size="lg" onClick={handleSubmit} disabled={!text.trim()}>
-            Add card
-          </Button>
+          <div className="flex gap-3 items-center mt-2">
+            <Button onClick={handleSubmit} disabled={!text.trim()}>
+              Add card
+            </Button>
 
-          <div
-            className="flex items-center gap-2 cursor-pointer ml-auto"
-            onClick={handleReadyToggle}
-          >
-            <Checkbox
-              id="ready-checkbox"
-              value={isReady}
-              onChange={handleReadyToggle}
-            />
-            <label
-              className="font-medium cursor-pointer select-none"
-              htmlFor="ready-checkbox"
+            <div
+              className="flex items-center gap-2 cursor-pointer ml-auto"
+              onClick={handleReadyToggle}
             >
-              I'm finished
-            </label>
+              <Checkbox
+                id="ready-checkbox"
+                value={isReady}
+                onChange={handleReadyToggle}
+              />
+              <label
+                className="cursor-pointer select-none leading-none"
+                htmlFor="ready-checkbox"
+              >
+                I'm finished
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -239,7 +239,9 @@ export default function ProblemInput({
             sortedCards.map((card) => (
               <div key={card.id} className="p-3 pr-2 border border-border">
                 <div className="flex justify-between items-start gap-2">
-                  <p className="text-sm flex-1 text-ellipsis overflow-hidden whitespace-nowrap">{card.text}</p>
+                  <p className="text-sm flex-1 text-ellipsis overflow-hidden whitespace-nowrap">
+                    {card.text}
+                  </p>
                   <button
                     onClick={() => handleDelete(card.id)}
                     title="Delete card"

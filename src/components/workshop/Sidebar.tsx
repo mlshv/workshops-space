@@ -74,7 +74,7 @@ export function Sidebar({
               <div className="relative py-1 px-2">
                 <UserAvatar name={user.name} size="base" />
                 {showVoteProgress && (
-                  <div className="absolute -bottom-1 left-6 bg-gray-800 text-white text-xxs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
+                  <div className="absolute -bottom-1 left-6 bg-foreground text-background text-xxs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
                     {stats.votedCards}/{stats.totalCards}
                   </div>
                 )}

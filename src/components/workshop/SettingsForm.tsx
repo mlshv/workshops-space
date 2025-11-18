@@ -59,7 +59,7 @@ export function SettingsForm({
           value={anonymousVotes}
           onChange={onAnonymousVotesChange}
         />
-        <label className="font-medium cursor-pointer select-none" htmlFor="anonymous-votes">
+        <label className="cursor-pointer select-none leading-none" htmlFor="anonymous-votes">
           Anonymous votes
         </label>
       </div>

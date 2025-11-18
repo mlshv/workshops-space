@@ -142,7 +142,7 @@ export function SettingsModal({
                       <XIcon className="w-5.5 h-5.5" />
                     </Dialog.Close>
                     <div className="p-6 space-y-6">
-                      <Dialog.Title className="text-4xl font-medium">
+                      <Dialog.Title className="text-2xl font-medium">
                         Session settings
                       </Dialog.Title>
 
@@ -167,7 +167,6 @@ export function SettingsModal({
                             </p>
                             <Button
                               onClick={handleResetVotes}
-                              size="lg"
                               className="bg-destructive text-white hover:bg-destructive/90"
                             >
                               Reset all votes

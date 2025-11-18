@@ -63,7 +63,7 @@ export default function ResultsMatrix({
   return (
     <div className="flex-1 py-6 px-4 flex flex-col gap-4 overflow-y-auto">
       <div className="flex justify-between items-center">
-        <h2 className="text-4xl font-medium">Results 🔒</h2>
+        <h2 className="text-2xl font-medium">Results 🔒</h2>
         <div className="text-sm text-muted-foreground">
           {positions.length} card{positions.length !== 1 ? 's' : ''} voted on
         </div>

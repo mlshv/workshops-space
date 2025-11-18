@@ -77,7 +77,7 @@ export const Checkbox = ({
         'inline-block select-none m-0 p-0 bg-transparent border-0 cursor-pointer',
         {
           'text-[2rem] sm:text-[3.5rem]': size === 'xl',
-          'text-[0.5rem]': size === 'base',
+          'text-[0.4rem]': size === 'base',
         },
         className,
       )}

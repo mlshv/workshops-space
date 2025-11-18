@@ -36,9 +36,9 @@ export default function WaitingRoom({
 
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <div className="space-y-2">
+      <div className="space-y-2 max-w-xl">
         <div className="flex items-center gap-1">
-          <h2 className="text-4xl font-medium">{displayTitle}</h2>
+          <h2 className="text-2xl font-medium">{displayTitle}</h2>
           {isAdmin && onSettingsClick && (
             <button
               className="p-1 text-foreground/50 hover:text-foreground clickable"
@@ -48,14 +48,14 @@ export default function WaitingRoom({
             </button>
           )}
         </div>
-        <p className="text-xl">{displayDescription}</p>
+        <p>{displayDescription}</p>
       </div>
 
       <div className="">
-        <h2 className="text-4xl font-medium mb-4">Invite link</h2>
+        <h2 className="text-2xl font-medium mb-4">Invite link</h2>
         <div className="flex flex-col items-start gap-1 mt-2">
           <button
-            className="inline-flex items-center gap-2 cursor-pointer border border-border rounded pl-4 pr-3 py-2 text-xl hover:bg-foreground/5"
+            className="inline-flex items-center gap-2 cursor-pointer border border-border rounded pl-4 pr-3 py-1 text-lg hover:bg-foreground/5"
             onClick={handleCopy}
             title="Copy link"
           >
@@ -70,7 +70,7 @@ export default function WaitingRoom({
                     exit={{ scale: 0, opacity: 0, position: 'absolute' }}
                     className="inline-flex"
                   >
-                    <CheckIcon className="size-6" />
+                    <CheckIcon className="size-5" />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -80,7 +80,7 @@ export default function WaitingRoom({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0, opacity: 0, position: 'absolute' }}
                   >
-                    <CopyIcon className="size-6" />
+                    <CopyIcon className="size-5" />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -90,7 +90,7 @@ export default function WaitingRoom({
       </div>
 
       <div>
-        <h2 className="font-medium text-4xl mb-4">
+        <h2 className="text-2xl font-medium mb-4">
           Participants ({room.users.length})
         </h2>
         <ul className="space-y-2">
@@ -100,7 +100,7 @@ export default function WaitingRoom({
               <div>
                 <span className="font-medium">{user.name}</span>
                 {user.id === room.adminId && (
-                  <span className="text-muted-foreground text-xs ml-2">
+                  <span className="text-muted-foreground text-xs ml-1">
                     (creator)
                   </span>
                 )}

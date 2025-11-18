@@ -68,7 +68,7 @@ function HomePage() {
                   }
                 }}
               />
-              <Button size="lg" onClick={handleJoin}>
+              <Button onClick={handleJoin}>
                 Join
               </Button>
             </div>

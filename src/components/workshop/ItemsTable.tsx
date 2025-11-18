@@ -117,7 +117,7 @@ const createColumns = (
           <Select.Trigger className="flex w-40 items-center justify-between gap-2 px-3 py-1.5 text-sm bg-white border border-border rounded hover:border-foreground focus:outline-none focus-visible:ring-2 focus:ring-primary focus-visible:border-transparent cursor-pointer">
             <Select.Value />
             <Select.Icon>
-              <CaretUpDownIcon size={16} className="text-gray-500" />
+              <CaretUpDownIcon size={16} className="text-muted-foreground" />
             </Select.Icon>
           </Select.Trigger>
           <Select.Portal>
@@ -253,7 +253,7 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
 
   return (
     <div>
-      <h3 className="text-lg font-medium mb-4">All Items</h3>
+      <h3 className="text-lg font-medium mb-2">All Items</h3>
       <div className="bg-white border border-border overflow-hidden">
         <table className="w-full">
           <thead className="bg-foreground/5 border-b border-border">

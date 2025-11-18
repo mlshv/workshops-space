@@ -114,7 +114,7 @@ export function CardDetailsModal({
                         {/* Aggregated Scores */}
                         <div className="grid grid-cols-2 gap-3 mb-4">
                           <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-gray-600 mb-1">
+                            <div className="text-xs text-muted-foreground mb-1">
                               Avg. Importance
                             </div>
                             <div className="text-lg font-medium">
@@ -122,7 +122,7 @@ export function CardDetailsModal({
                             </div>
                           </div>
                           <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-gray-600 mb-1">
+                            <div className="text-xs text-muted-foreground mb-1">
                               Avg. Complexity
                             </div>
                             <div className="text-lg font-medium">
@@ -130,7 +130,7 @@ export function CardDetailsModal({
                             </div>
                           </div>
                           <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-gray-600 mb-1">
+                            <div className="text-xs text-muted-foreground mb-1">
                               Importance Spread
                             </div>
                             <div className="text-lg font-medium">
@@ -141,7 +141,7 @@ export function CardDetailsModal({
                             </div>
                           </div>
                           <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-gray-600 mb-1">
+                            <div className="text-xs text-muted-foreground mb-1">
                               Complexity Spread
                             </div>
                             <div className="text-lg font-medium">
@@ -178,7 +178,7 @@ export function CardDetailsModal({
                                         {user?.name || 'Unknown'}
                                       </div>
                                     </div>
-                                    <div className="text-xs text-gray-600">
+                                    <div className="text-xs text-muted-foreground">
                                       Importance: {toFixed(vote.importance, 1)} • Complexity:{' '}
                                       {toFixed(vote.complexity, 1)}
                                     </div>
