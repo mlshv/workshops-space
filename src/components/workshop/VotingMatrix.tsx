@@ -122,14 +122,15 @@ export default function VotingMatrix2({
   })
 
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveCard(null)
+    setActiveScore(null)
+    isInsideContainmentRef.current = false
+
     if (event.delta.x === 0 && event.delta.y === 0) {
       return
     }
 
     const cardId = event.active.id
-    setActiveCard(null)
-    setActiveScore(null)
-    isInsideContainmentRef.current = false
 
     const matrixLayoutRect = event.over?.rect ?? null
     const rect = event.active.rect.current.translated
@@ -264,7 +265,10 @@ export default function VotingMatrix2({
               return (
                 <motion.div
                   className="relative hover:z-1 hover:shadow-lg hover:brightness-103"
-                  whileHover={{ rotate: isActive ? 0 : 2, scale: isActive ? 1 : 1.05 }}
+                  whileHover={{
+                    rotate: isActive ? 0 : 2,
+                    scale: isActive ? 1 : 1.05,
+                  }}
                 >
                   <DraggableCard
                     key={card.id}
