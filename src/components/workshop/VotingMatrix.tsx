@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { motion } from 'motion/react'
 import {
   DndContext,
   useSensor,
@@ -8,7 +9,6 @@ import {
   useDraggable,
   DragMoveEvent,
   type Modifier,
-  ClientRect,
 } from '@dnd-kit/core'
 import type { RoomState, User, Vote } from '@/types/workshop'
 import { MATRIX_LAYOUT_DROPPABLE_ID, MatrixLayout } from './MatrixLayout'
@@ -22,6 +22,7 @@ import {
   calculateRelativePosition,
   calculateScore,
 } from '@/lib/matrix-position'
+import { DraggableOverlay } from './DraggableOverlay'
 
 type VotingMatrixProps = {
   room: RoomState
@@ -38,6 +39,7 @@ export default function VotingMatrix2({
     id: string
     text: string
     authorId: string
+    currentUserVote?: Vote
   } | null>(null)
   const [activeScore, setActiveScore] = useState<{
     importance: number
@@ -61,7 +63,9 @@ export default function VotingMatrix2({
 
   const getAuthorColor = (authorId: string): string => {
     const author = room.users.find((u) => u.id === authorId)
-    return author ? getCardColorFromName(author.name) : 'var(--color-sticky-note-yellow)'
+    return author
+      ? getCardColorFromName(author.name)
+      : 'var(--color-sticky-note-yellow)'
   }
 
   const restrictToMatrixLayout: Modifier = ({
@@ -124,6 +128,8 @@ export default function VotingMatrix2({
 
     const cardId = event.active.id
     setActiveCard(null)
+    setActiveScore(null)
+    isInsideContainmentRef.current = false
 
     const matrixLayoutRect = event.over?.rect ?? null
     const rect = event.active.rect.current.translated
@@ -147,11 +153,6 @@ export default function VotingMatrix2({
     if (!isInsideContainment) {
       return
     }
-
-    // setCoordinates({
-    //   x: `${percentLeft}%`,
-    //   y: `${percentTop}%`,
-    // })
 
     // Create vote with position data
     const vote: Vote = {
@@ -202,7 +203,7 @@ export default function VotingMatrix2({
         setActiveScore(
           calculateScore(containmentPercentTop, containmentPercentLeft),
         )
-        isInsideContainmentRef.current = (true)
+        isInsideContainmentRef.current = true
       } else {
         setActiveScore(null)
       }
@@ -210,7 +211,7 @@ export default function VotingMatrix2({
   }
 
   return (
-    <div className="flex-1 p-6 flex flex gap-4 h-full overflow-y-hidden">
+    <div className="flex-1 flex flex h-full overflow-y-hidden">
       <DndContext
         modifiers={[restrictToMatrixLayout, restrictToWindowEdges]}
         sensors={sensors}
@@ -220,11 +221,13 @@ export default function VotingMatrix2({
               (card) => card.id === event.active.id,
             )
             if (card) {
+              const vote = card.votes.find((v) => v.userId === currentUser.id)
               setCoordinates({
-                x: `${card.votes.find((v) => v.userId === currentUser.id)?.x ?? 0}%`,
-                y: `${card.votes.find((v) => v.userId === currentUser.id)?.y ?? 0}%`,
+                x: `${vote?.x ?? 0}%`,
+                y: `${vote?.y ?? 0}%`,
               })
-              setActiveCard(card)
+
+              setActiveCard({ ...card, currentUserVote: vote })
             }
           }
         }}
@@ -245,26 +248,33 @@ export default function VotingMatrix2({
                 score={isActive ? activeScore : (vote ?? null)}
                 zIndex={isActive ? sortedVotedCards.length + 1 : index}
                 authorColor={getAuthorColor(card.authorId)}
+                className="hover:brightness-103"
               />
             )
           })}
         </MatrixLayout>
 
-        <div className="w-[12vw] flex flex-col items-center">
-          <h3 className="font-medium mb-4 text-center">
+        <div className="flex flex-col items-center p-2 overflow-y-scroll">
+          <h3 className="font-medium mb-2 text-center">
             To vote ({votedCards.length}/{cardsWithOptimisticVotes.length})
           </h3>
-          <div className="flex flex-col gap-2 justify-center">
+          <div className="flex flex-col justify-center -space-y-8">
             {availableCards.map((card) => {
               const isActive = card.id === activeCard?.id
               return (
-                <DraggableCard
-                  key={card.id}
-                  card={card}
-                  score={isActive ? activeScore : null}
-                  zIndex={201}
-                  authorColor={getAuthorColor(card.authorId)}
-                />
+                <motion.div
+                  className="relative hover:z-1 hover:shadow-lg hover:brightness-103"
+                  whileHover={{ rotate: isActive ? 0 : 2, scale: isActive ? 1 : 1.05 }}
+                >
+                  <DraggableCard
+                    key={card.id}
+                    card={card}
+                    score={isActive ? activeScore : null}
+                    zIndex={201}
+                    authorColor={getAuthorColor(card.authorId)}
+                    className="hover:border-transparent"
+                  />
+                </motion.div>
               )
             })}
           </div>
@@ -275,44 +285,32 @@ export default function VotingMatrix2({
             </p>
           )}
         </div>
-        {/* <DragOverlay
-          style={{
-            left: x,
-            top: y,
-          } as React.CSSProperties}
-          dropAnimation={{
-            duration: 250,
-            easing:
-              'linear(0, 0.012 0.9%, 0.05 2%, 0.411 9.2%, 0.517 11.8%, 0.611 14.6%, 0.694 17.7%, 0.765 21.1%, 0.824 24.8%, 0.872 28.9%, 0.91 33.4%, 0.939 38.4%, 0.977 50.9%, 0.994 68.4%, 1)',
-            keyframes({ transform }) {
-              return [
-                { transform: CSS.Transform.toString(transform.initial) },
-                { transform: CSS.Transform.toString(transform.final) },
-              ]
-            },
-            sideEffects: defaultDropAnimationSideEffects({
-              className: {
-                active: 'opacity-0',
-              },
-            }),
-          }}
-        >
+        <DraggableOverlay>
           {activeCard && (
-            <MatrixCard
-              text={activeCard.text}
-              score={activeScore}
-              isDragging
-              dragOverlay
-            />
-            // <DraggableCard
-            //   key={activeId}
-            //   card={
-            //     cardsWithOptimisticVotes.find((card) => card.id === activeId)!
-            //   }
-            //   score={activeScore}
-            // />
+            <motion.div
+              className={cn(
+                'flex shadow-lg hover:brightness-103 origin-center rounded',
+              )}
+              animate={{
+                rotate: 0,
+                scale: 1,
+              }}
+              initial={{
+                rotate: activeCard.currentUserVote ? 0 : 2,
+                scale: activeCard.currentUserVote ? 1 : 1.05,
+              }}
+            >
+              <MatrixCard
+                text={activeCard.text}
+                score={activeScore}
+                isDragging
+                dragOverlay
+                authorColor={getAuthorColor(activeCard.authorId)}
+                className="border-transparent"
+              />
+            </motion.div>
           )}
-        </DragOverlay> */}
+        </DraggableOverlay>
       </DndContext>
     </div>
   )
@@ -325,9 +323,18 @@ type DraggableCardProps = {
   score: { importance: number; complexity: number } | null
   zIndex?: number
   authorColor?: string
+  className?: string
 }
 
-function DraggableCard({ card, x, y, score, zIndex, authorColor }: DraggableCardProps) {
+function DraggableCard({
+  card,
+  x,
+  y,
+  score,
+  zIndex,
+  authorColor,
+  className,
+}: DraggableCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: card.id,
@@ -339,6 +346,7 @@ function DraggableCard({ card, x, y, score, zIndex, authorColor }: DraggableCard
         left: x,
         top: y,
         zIndex,
+        opacity: 0.5,
       }
     : {
         left: x,
@@ -357,7 +365,14 @@ function DraggableCard({ card, x, y, score, zIndex, authorColor }: DraggableCard
         x !== undefined && y !== undefined && 'absolute',
       )}
     >
-      <MatrixCard text={card.text} score={score} isDragging={isDragging} zIndex={zIndex} authorColor={authorColor} />
+      <MatrixCard
+        text={card.text}
+        score={score}
+        isDragging={isDragging}
+        zIndex={zIndex}
+        authorColor={authorColor}
+        className={className}
+      />
     </div>
   )
 }

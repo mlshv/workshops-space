@@ -51,15 +51,10 @@ export function MatrixCard({
             // @ts-expect-error - it's fine
             <motion.div
               {...props}
-              transition={{
-                type: 'spring',
-                stiffness: 400,
-                damping: 30,
-              }}
               onClick={resultsMode ? () => setDialogOpen(true) : undefined}
               className={cn(
                 'MatrixCard relative px-3 py-2 bg-white rounded text-xs w-[12vw] h-[8vw] leading-tight',
-                'overflow-hidden select-none transition-scale duration-200 border-2 border-background',
+                'overflow-hidden select-none transition-scale duration-0 shadow-sm',
                 className,
               )}
               style={{ backgroundColor: authorColor }}
@@ -85,15 +80,15 @@ export function MatrixCard({
             </motion.div>
           )}
         />
-        {score && isDragging && (
-          <Popover.Portal>
+        {score && isDragging && dragOverlay && (
+          <Popover.Portal container={document.body}>
             <Popover.Positioner
               sideOffset={4}
               side="bottom"
               align="start"
-              style={{ zIndex }}
+              style={{ zIndex: zIndex ?? 9999 }}
             >
-              <Popover.Popup className="text-xxs px-3 py-2 bg-gray-800 text-white rounded shadow-lg z-50">
+              <Popover.Popup className="text-xxs px-3 py-2 bg-gray-800 text-white rounded shadow-lg">
                 <span>Importance:</span>{' '}
                 <span className="font-medium">
                   {toFixed(score.importance, 1)}/10

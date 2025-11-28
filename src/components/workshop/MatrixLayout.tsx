@@ -1,14 +1,16 @@
+import { cn } from '@/lib/utils'
 import { useDroppable } from '@dnd-kit/core'
 import { forwardRef, type ReactNode } from 'react'
 
 type MatrixLayoutProps = {
+  className?: string
   children: ReactNode
 }
 
 export const MATRIX_LAYOUT_DROPPABLE_ID = 'matrix-layout'
 
 export const MatrixLayout = forwardRef<HTMLDivElement, MatrixLayoutProps>(
-  ({ children }, ref) => {
+  ({ className, children }, ref) => {
     const { setNodeRef } = useDroppable({
       id: MATRIX_LAYOUT_DROPPABLE_ID,
     })
@@ -25,7 +27,7 @@ export const MatrixLayout = forwardRef<HTMLDivElement, MatrixLayoutProps>(
           }
           setNodeRef(node)
         }}
-        className="w-full h-full flex-1 relative border border-border "
+        className={cn("w-full h-full flex-1 relative", className)}
       >
         {/* Cross lines */}
         <div className="absolute top-0 left-1/2 w-px h-full bg-border pointer-events-none" />

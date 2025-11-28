@@ -1,5 +1,6 @@
 import type * as Party from 'partykit/server'
-import { generateText } from 'ai'
+import { generateObject } from 'ai'
+import { z } from 'zod'
 import { cerebras } from '@ai-sdk/cerebras'
 
 type Message =
@@ -361,46 +362,52 @@ Please analyze this data and provide:
    - Be concise and direct
 3. Word Cloud: Extract 5-10 key topics/themes mentioned across all cards with their significance weight (1-10)
 
-IMPORTANT: Use simple, clear language (B1 English level). Avoid complex words and jargon.
+IMPORTANT:
+- Detect the language used in the ideas/problems (cards text).
+- Generate all insights, suggestions, and word cloud topics IN THE SAME LANGUAGE as the input content.
+- Use simple, clear language (B1 level). Avoid complex words and jargon.
 
 CRITICAL:
 - You MUST provide exactly 3 items for keyInsights and aiSuggestions
 - Each bullet point must be SHORT - aim for 7 words, maximum 10 words
-- For wordCloud, provide 5-10 topics
+- For wordCloud, provide 5-10 topics`
 
-For the word cloud:
-- Extract main topics, themes, or concepts mentioned in the cards
-- Weight represents both frequency and significance (1=low, 10=high)
-- Use concise 1-3 word topics (e.g., "User Experience", "API Performance", "Mobile App")
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "keyInsights": ["insight 1", "insight 2", "insight 3"],
-  "aiSuggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
-  "wordCloud": [
-    { "topic": "Topic Name", "weight": 8 },
-    { "topic": "Another Topic", "weight": 5 }
-  ]
-}`
-
-    const { text } = await generateText({
+    const { object } = await generateObject({
       model: cerebras('gpt-oss-120b'),
+      schema: z.object({
+        keyInsights: z
+          .array(z.string())
+          .length(3)
+          .describe(
+            '3 key insights about voting patterns and priorities, each 7-10 words',
+          ),
+        aiSuggestions: z
+          .array(z.string())
+          .length(3)
+          .describe('3 actionable recommendations, each 7-10 words'),
+        wordCloud: z
+          .array(
+            z.object({
+              topic: z.string().describe('Topic name (1-3 words)'),
+              weight: z
+                .number()
+                .min(1)
+                .max(10)
+                .describe('Significance weight (1-10)'),
+            }),
+          )
+          .min(5)
+          .max(10)
+          .describe('5-10 key topics/themes'),
+      }),
       prompt,
       temperature: 0.7,
     })
 
-    // Parse JSON response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
-      throw new Error('Failed to parse AI response')
-    }
-
-    const parsed = JSON.parse(jsonMatch[0])
-
     return {
-      keyInsights: parsed.keyInsights || [],
-      aiSuggestions: parsed.aiSuggestions || [],
-      wordCloud: parsed.wordCloud || [],
+      keyInsights: object.keyInsights,
+      aiSuggestions: object.aiSuggestions,
+      wordCloud: object.wordCloud,
       generatedAt: Date.now(),
     }
   }

@@ -71,7 +71,7 @@ function WorkshopPage() {
   if (!roomState || !connection || !currentUser) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 h-screen p-6">
-        <SmallAppleSpinner className="size-6" />
+        <SmallAppleSpinner className="size-6 text-foreground/50" />
         <p className="text-sm text-muted-foreground">Connecting to session...</p>
       </div>
     )

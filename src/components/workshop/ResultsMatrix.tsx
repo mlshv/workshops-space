@@ -70,7 +70,7 @@ export default function ResultsMatrix({
       </div>
 
       <div className="min-h-[80vh] flex flex-col">
-        <MatrixLayout>
+        <MatrixLayout className="border border-border">
           {positions.map((pos, index) => (
             <div
               key={pos.card.id}
