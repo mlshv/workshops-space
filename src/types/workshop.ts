@@ -26,6 +26,8 @@ export type User = {
   name: string
   avatar?: string
   color?: string
+  cardColor?: string
+  colorIndex: number
   ready?: boolean
 }
 

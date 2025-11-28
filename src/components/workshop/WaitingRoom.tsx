@@ -96,7 +96,7 @@ export default function WaitingRoom({
         <ul className="space-y-2">
           {room.users.map((user) => (
             <li key={user.id} className="flex items-center gap-2">
-              <UserAvatar name={user.name} />
+              <UserAvatar name={user.name} color={user.color || 'var(--color-sticky-note-yellow)'} />
               <div>
                 <span className="font-medium">{user.name}</span>
                 {user.id === room.adminId && (

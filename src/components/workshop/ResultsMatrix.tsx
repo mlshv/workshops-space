@@ -8,7 +8,6 @@ import { AISummary } from './AISummary'
 import { aggregateVotes, type AggregatedScore } from '@/lib/aggregateVotes'
 import { normalize } from '@/lib/normalize'
 import type { RoomConnection } from '@/lib/partykit'
-import { getCardColorFromName } from '@/lib/avatar'
 import {
   calculatePositionFromContainment,
   CARD_DIMENSIONS,
@@ -55,9 +54,7 @@ export default function ResultsMatrix({
 
   const getAuthorColor = (authorId: string): string => {
     const author = room.users.find((u) => u.id === authorId)
-    return author
-      ? getCardColorFromName(author.name)
-      : 'var(--color-sticky-note-yellow)'
+    return author?.cardColor || 'var(--color-sticky-note-yellow)'
   }
 
   return (

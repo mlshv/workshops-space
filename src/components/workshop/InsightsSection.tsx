@@ -2,7 +2,6 @@ import type { AggregatedScore } from '@/lib/aggregateVotes'
 import type { Card, RoomState } from '@/types/workshop'
 import { toFixed } from '@/lib/to-fixed'
 import { MatrixCard } from './MatrixCard'
-import { getCardColorFromName } from '@/lib/avatar'
 import React from 'react'
 
 type InsightsSectionProps = {
@@ -16,9 +15,7 @@ type InsightsSectionProps = {
 export function InsightsSection({ positions, room }: InsightsSectionProps) {
   const getAuthorColor = (authorId: string): string => {
     const author = room.users.find((u) => u.id === authorId)
-    return author
-      ? getCardColorFromName(author.name)
-      : 'var(--color-sticky-note-yellow)'
+    return author?.cardColor || 'var(--color-sticky-note-yellow)'
   }
 
   // Count high priority items (importance >= 7)

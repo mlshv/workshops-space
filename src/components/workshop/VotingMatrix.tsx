@@ -17,7 +17,6 @@ import { restrictToBoundingRect } from '@/lib/dnd'
 import { restrictToWindowEdges } from '@dnd-kit/modifiers'
 import { cn } from '@/lib/utils'
 import { CheckIcon } from '@phosphor-icons/react'
-import { getCardColorFromName } from '@/lib/avatar'
 import {
   calculateRelativePosition,
   calculateScore,
@@ -63,9 +62,7 @@ export default function VotingMatrix2({
 
   const getAuthorColor = (authorId: string): string => {
     const author = room.users.find((u) => u.id === authorId)
-    return author
-      ? getCardColorFromName(author.name)
-      : 'var(--color-sticky-note-yellow)'
+    return author?.cardColor || 'var(--color-sticky-note-yellow)'
   }
 
   const restrictToMatrixLayout: Modifier = ({
@@ -254,7 +251,7 @@ export default function VotingMatrix2({
           })}
         </MatrixLayout>
 
-        <div className="flex flex-col items-center p-2 overflow-y-scroll">
+        <div className="w-[13vw] flex flex-col items-center p-2 overflow-y-scroll border-l border-border">
           <h3 className="font-medium mb-2 text-center">
             To vote ({votedCards.length}/{cardsWithOptimisticVotes.length})
           </h3>
@@ -272,7 +269,7 @@ export default function VotingMatrix2({
                     score={isActive ? activeScore : null}
                     zIndex={201}
                     authorColor={getAuthorColor(card.authorId)}
-                    className="hover:border-transparent"
+                    className="hover:border-transparent border-2 border-background shadow-none"
                   />
                 </motion.div>
               )

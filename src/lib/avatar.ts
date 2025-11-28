@@ -1,30 +1,32 @@
 /**
- * Generates a deterministic hue value (0-360) from a string (name)
- * Uses a simple hash function to ensure same name always gets same hue
+ * Golden Angle constant for optimal color distribution
+ * Using golden ratio to maximize perceptual distance between sequential colors
  */
-function getHueFromName(name: string): number {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return Math.abs(hash % 360)
+const GOLDEN_ANGLE = 137.5077640500378
+
+/**
+ * Generates a hue value from an index using the Golden Angle approach
+ * This ensures each sequential index gets the most distinct color from previous ones
+ */
+function getHueFromIndex(index: number): number {
+  return (index * GOLDEN_ANGLE) % 360
 }
 
 /**
- * Generates a vibrant HSL color for avatars from a name
+ * Generates a vibrant HSL color for avatars from a color index
  * Uses higher saturation and medium lightness for visibility
  */
-export function getColorFromName(name: string): string {
-  const hue = getHueFromName(name)
+export function getColorFromIndex(index: number): string {
+  const hue = getHueFromIndex(index)
   return `hsl(${hue}, 70%, 60%)`
 }
 
 /**
- * Generates a light HSL color for card backgrounds from a name
- * Uses lower saturation and high lightness for better readability with black text
+ * Generates a light HSL color for card backgrounds from a color index
+ * Uses higher saturation and high lightness for better readability with black text
  */
-export function getCardColorFromName(name: string): string {
-  const hue = getHueFromName(name)
+export function getCardColorFromIndex(index: number): string {
+  const hue = getHueFromIndex(index)
   return `hsl(${hue}, 100%, 85%)`
 }
 

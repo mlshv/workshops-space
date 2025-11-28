@@ -1,13 +1,14 @@
-import { getColorFromName, getInitial } from '@/lib/avatar'
+import { getInitial } from '@/lib/avatar'
 import { cn } from '@/lib/utils'
 
 type UserAvatarProps = {
   name: string
+  color: string
   size?: 'sm' | 'base'
   className?: string
 }
 
-export function UserAvatar({ name, size = 'base', className }: UserAvatarProps) {
+export function UserAvatar({ name, color, size = 'base', className }: UserAvatarProps) {
   const sizeClasses = {
     sm: 'w-6 h-6 text-sm',
     base: 'w-8 h-8 text-lg',
@@ -20,7 +21,7 @@ export function UserAvatar({ name, size = 'base', className }: UserAvatarProps) 
         sizeClasses[size],
         className,
       )}
-      style={{ backgroundColor: getColorFromName(name) }}
+      style={{ backgroundColor: color }}
     >
       {getInitial(name)}
     </div>

@@ -23,11 +23,9 @@ import type {
 } from '@/types/workshop'
 import type { AggregatedScore } from '@/lib/aggregateVotes'
 import { toFixed } from '@/lib/to-fixed'
-import { MatrixCard } from './MatrixCard'
 import { UserAvatar } from './UserAvatar'
 import { cn } from '@/lib/utils'
 import type { RoomConnection } from '@/lib/partykit'
-import { getCardColorFromName } from '@/lib/avatar'
 import { CardDetailsModal } from './CardDetailsModal'
 
 type ItemsTableProps = {
@@ -47,7 +45,8 @@ type TableRow = {
   votes: VoteType[]
   aggregated: AggregatedScore
   cardId: string
-  authorColor?: string
+  authorColor: string // Card background color (pale)
+  avatarColor: string // Avatar color (dark)
 }
 
 const nextActionOptions = [
@@ -82,7 +81,7 @@ const createColumns = (
     header: 'Posted by',
     cell: (info) => (
       <div className="flex items-center gap-2">
-        <UserAvatar name={info.getValue()} size="sm" />
+        <UserAvatar name={info.getValue()} color={info.row.original.avatarColor} size="sm" />
         <span>{info.getValue()}</span>
       </div>
     ),
@@ -158,16 +157,6 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
 
-  const getAuthorColor = (authorId: string): string => {
-    if (room.anonymousVotes) {
-      return 'var(--color-sticky-note-yellow)'
-    }
-    const author = room.users.find((u) => u.id === authorId)
-    return author
-      ? getCardColorFromName(author.name)
-      : 'var(--color-sticky-note-yellow)'
-  }
-
   const handleTextClick = (cardId: string) => {
     setSelectedCardId(cardId)
   }
@@ -219,7 +208,8 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           votes: pos.card.votes,
           aggregated: pos.aggregated,
           cardId: pos.card.id,
-          authorColor: getAuthorColor(pos.card.authorId),
+          authorColor: author?.cardColor || 'var(--color-sticky-note-yellow)',
+          avatarColor: author?.color || 'var(--color-sticky-note-yellow)',
         }
       }),
     [positions, room.users, room.anonymousVotes],

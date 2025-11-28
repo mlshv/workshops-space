@@ -72,7 +72,7 @@ export function Sidebar({
           >
             <Popover.Trigger className="cursor-default">
               <div className="relative py-1 px-2">
-                <UserAvatar name={user.name} size="base" />
+                <UserAvatar name={user.name} color={user.color || 'var(--color-sticky-note-yellow)'} size="base" />
                 {showVoteProgress && (
                   <div className="absolute -bottom-1 left-6 bg-foreground text-background text-xxs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
                     {stats.votedCards}/{stats.totalCards}

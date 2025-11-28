@@ -39,21 +39,21 @@ function HomePage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-6">
-        <h1 className="text-4xl text-center">Workshop</h1>
+        {/* <h1 className="text-4xl text-center">Workshop</h1> */}
 
         <div className="space-y-4">
           <Button
-            className="flex w-full flex-col items-center gap-2 py-8"
-            variant="tile"
+            size="lg"
             onClick={handleCreate}
+            className="flex w-full gap-2 items-center justify-center py-2"
           >
-            <PlusIcon className="size-8" />
-            <h2 className="font-medium">Create a session</h2>
+            {' '}
+            <PlusIcon className="size-5" /> Create a session
           </Button>
 
           <div className="text-center text-muted-foreground text-sm">or</div>
 
-          <div className="border p-4 rounded">
+          <div className="border p-4 rounded shadow-sm">
             <h2 className="mb-2 font-medium">Join a session</h2>
             <div className="flex gap-2">
               <Input
@@ -68,9 +68,7 @@ function HomePage() {
                   }
                 }}
               />
-              <Button onClick={handleJoin}>
-                Join
-              </Button>
+              <Button onClick={handleJoin}>Join</Button>
             </div>
           </div>
         </div>

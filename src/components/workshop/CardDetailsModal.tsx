@@ -171,6 +171,7 @@ export function CardDetailsModal({
                                   >
                                     <UserAvatar
                                       name={user?.name || 'Unknown'}
+                                      color={user?.color || 'var(--color-sticky-note-yellow)'}
                                       size="sm"
                                     />
                                     <div className="flex-1">

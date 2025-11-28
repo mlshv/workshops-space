@@ -26,6 +26,8 @@ type User = {
   name: string
   avatar?: string
   color?: string
+  cardColor?: string
+  colorIndex: number
   ready?: boolean
 }
 
@@ -119,7 +121,24 @@ export default class Server implements Party.Server {
 
           const userExists = state.users.some((u) => u.id === data.user.id)
           if (!userExists) {
-            state.users.push(data.user)
+            // Assign sequential colorIndex based on existing users
+            const maxColorIndex = state.users.length > 0
+              ? Math.max(...state.users.map((u) => u.colorIndex ?? -1))
+              : -1
+            const colorIndex = maxColorIndex + 1
+
+            // Generate colors from colorIndex using Golden Angle
+            const hue = (colorIndex * 137.5077640500378) % 360
+            const color = `hsl(${hue}, 80%, 45%)` // Avatar color - darker, more saturated
+            const cardColor = `hsl(${hue}, 100%, 85%)` // Card color - lighter, more pastel
+
+            const newUser = {
+              ...data.user,
+              colorIndex,
+              color,
+              cardColor,
+            }
+            state.users.push(newUser)
             await this.room.storage.put('state', state)
             this.room.broadcast(JSON.stringify({ type: 'state', state }))
           }
