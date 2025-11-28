@@ -5,6 +5,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type SortingState,
+  type ColumnDef,
 } from '@tanstack/react-table'
 import { useState, useMemo } from 'react'
 import {
@@ -64,94 +65,107 @@ const createColumns = (
   room: RoomState,
   connection: RoomConnection,
   onTextClick: (cardId: string) => void,
-) => [
-  columnHelper.accessor('title', {
-    header: 'Text',
-    cell: (info) => (
-      <div
-        className="text-ellipsis overflow-hidden whitespace-nowrap max-w-40 clickable hover:opacity-60"
-        onClick={() => onTextClick(info.row.original.cardId)}
-      >
-        {info.getValue()}
-      </div>
-    ),
-    enableSorting: false,
-  }),
-  columnHelper.accessor('postedBy', {
-    header: 'Posted by',
-    cell: (info) => (
-      <div className="flex items-center gap-2">
-        <UserAvatar name={info.getValue()} color={info.row.original.avatarColor} size="sm" />
-        <span>{info.getValue()}</span>
-      </div>
-    ),
-    enableSorting: true,
-  }),
-  columnHelper.accessor('importance', {
-    header: 'Importance',
-    cell: (info) => toFixed(info.getValue(), 1),
-    enableSorting: true,
-  }),
-  columnHelper.accessor('complexity', {
-    header: 'Complexity',
-    cell: (info) => toFixed(info.getValue(), 1),
-    enableSorting: true,
-  }),
-  columnHelper.display({
-    id: 'nextAction',
-    header: 'Next action',
-    cell: (info) => {
-      const cardId = info.row.original.cardId
-      const card = room.cards.find((c) => c.id === cardId)
-      const currentAction = card?.nextAction || null
-
-      return (
-        <Select.Root
-          items={nextActionOptions}
-          value={currentAction}
-          onValueChange={(value) =>
-            connection.setNextAction(cardId, value as NextActionType)
-          }
+) => {
+  const columns: ColumnDef<TableRow, any>[] = [
+    columnHelper.accessor('title', {
+      header: 'Text',
+      cell: (info) => (
+        <div
+          className="text-ellipsis overflow-hidden whitespace-nowrap max-w-40 clickable hover:opacity-60"
+          onClick={() => onTextClick(info.row.original.cardId)}
         >
-          <Select.Trigger className="flex w-40 items-center justify-between gap-2 px-3 py-1.5 text-sm bg-white border border-border rounded hover:border-foreground focus:outline-none focus-visible:ring-2 focus:ring-primary focus-visible:border-transparent cursor-pointer">
-            <Select.Value />
-            <Select.Icon>
-              <CaretUpDownIcon size={16} className="text-muted-foreground" />
-            </Select.Icon>
-          </Select.Trigger>
-          <Select.Portal>
-            <Select.Positioner sideOffset={4}>
-              <Select.Popup className="bg-white border border-border rounded shadow-lg py-1 z-50">
-                <Select.List>
-                  {nextActionOptions.map(({ label, value, disabled }) => (
-                    <Select.Item
-                      key={String(value)}
-                      value={value}
-                      className={cn(
-                        'flex items-center gap-2 px-3 py-2 text-sm outline-none cursor-default',
-                        !disabled && 'hover:bg-gray-100 cursor-pointer',
-                      )}
-                      disabled={disabled}
-                    >
-                      {!disabled && (
-                        <Select.ItemIndicator className="w-4 h-4 flex items-center justify-center">
-                          <CheckIcon size={16} weight="bold" />
-                        </Select.ItemIndicator>
-                      )}
-                      <Select.ItemText className={cn(disabled && 'opacity-50')}>
-                        {label}
-                      </Select.ItemText>
-                    </Select.Item>
-                  ))}
-                </Select.List>
-              </Select.Popup>
-            </Select.Positioner>
-          </Select.Portal>
-        </Select.Root>
-      )
-    },
-  }),
-]
+          {info.getValue()}
+        </div>
+      ),
+      enableSorting: false,
+    }),
+  ]
+
+  // Only show "Posted by" column if anonymousCards is not enabled
+  if (!room.anonymousCards) {
+    columns.push(
+      columnHelper.accessor('postedBy', {
+        header: 'Posted by',
+        cell: (info) => (
+          <div className="flex items-center gap-2">
+            <UserAvatar name={info.getValue()} color={info.row.original.avatarColor} size="sm" />
+            <span>{info.getValue()}</span>
+          </div>
+        ),
+        enableSorting: true,
+      }),
+    )
+  }
+
+  columns.push(
+    columnHelper.accessor('importance', {
+      header: 'Importance',
+      cell: (info) => toFixed(info.getValue(), 1),
+      enableSorting: true,
+    }),
+    columnHelper.accessor('complexity', {
+      header: 'Complexity',
+      cell: (info) => toFixed(info.getValue(), 1),
+      enableSorting: true,
+    }),
+    columnHelper.display({
+      id: 'nextAction',
+      header: 'Next action',
+      cell: (info) => {
+        const cardId = info.row.original.cardId
+        const card = room.cards.find((c) => c.id === cardId)
+        const currentAction = card?.nextAction || null
+
+        return (
+          <Select.Root
+            items={nextActionOptions}
+            value={currentAction}
+            onValueChange={(value) =>
+              connection.setNextAction(cardId, value as NextActionType)
+            }
+          >
+            <Select.Trigger className="flex w-40 items-center justify-between gap-2 px-3 py-1.5 text-sm bg-white border border-border rounded hover:border-foreground focus:outline-none focus-visible:ring-2 focus:ring-primary focus-visible:border-transparent cursor-pointer">
+              <Select.Value />
+              <Select.Icon>
+                <CaretUpDownIcon size={16} className="text-muted-foreground" />
+              </Select.Icon>
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Positioner sideOffset={4}>
+                <Select.Popup className="bg-white border border-border rounded shadow-lg py-1 z-50">
+                  <Select.List>
+                    {nextActionOptions.map(({ label, value, disabled }) => (
+                      <Select.Item
+                        key={String(value)}
+                        value={value}
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2 text-sm outline-none cursor-default',
+                          !disabled && 'hover:bg-gray-100 cursor-pointer',
+                        )}
+                        disabled={disabled}
+                      >
+                        {!disabled && (
+                          <Select.ItemIndicator className="w-4 h-4 flex items-center justify-center">
+                            <CheckIcon size={16} weight="bold" />
+                          </Select.ItemIndicator>
+                        )}
+                        <Select.ItemText className={cn(disabled && 'opacity-50')}>
+                          {label}
+                        </Select.ItemText>
+                      </Select.Item>
+                    ))}
+                  </Select.List>
+                </Select.Popup>
+              </Select.Positioner>
+            </Select.Portal>
+          </Select.Root>
+        )
+      },
+    }),
+  )
+
+  return columns
+}
 
 export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
@@ -200,6 +214,8 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
     () =>
       positions.map((pos) => {
         const author = room.users.find((p) => p.id === pos.card.authorId)
+        const defaultColor = 'var(--color-sticky-note-yellow)'
+
         return {
           title: pos.card.text,
           postedBy: author?.name || 'Unknown',
@@ -208,11 +224,11 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           votes: pos.card.votes,
           aggregated: pos.aggregated,
           cardId: pos.card.id,
-          authorColor: author?.cardColor || 'var(--color-sticky-note-yellow)',
-          avatarColor: author?.color || 'var(--color-sticky-note-yellow)',
+          authorColor: room.anonymousCards ? defaultColor : (author?.cardColor || defaultColor),
+          avatarColor: room.anonymousCards ? defaultColor : (author?.color || defaultColor),
         }
       }),
-    [positions, room.users, room.anonymousVotes],
+    [positions, room.users, room.anonymousVotes, room.anonymousCards],
   )
 
   const columns = useMemo(

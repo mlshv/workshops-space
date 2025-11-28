@@ -61,6 +61,9 @@ export default function VotingMatrix2({
   const sensors = useSensors(useSensor(PointerSensor))
 
   const getAuthorColor = (authorId: string): string => {
+    if (room.anonymousCards) {
+      return 'var(--color-sticky-note-yellow)'
+    }
     const author = room.users.find((u) => u.id === authorId)
     return author?.cardColor || 'var(--color-sticky-note-yellow)'
   }

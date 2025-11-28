@@ -62,6 +62,11 @@ export function SettingsModal({
     connection.updateWorkshopInfo({ anonymousVotes })
   }
 
+  const handleAnonymousCardsChange = (anonymousCards: boolean) => {
+    // Keep checkbox syncing immediately since it's a single toggle
+    connection.updateWorkshopInfo({ anonymousCards })
+  }
+
   const handleModalClose = (isOpen: boolean) => {
     if (!isOpen) {
       // Save any pending changes when modal closes
@@ -151,9 +156,11 @@ export function SettingsModal({
                           title={localTitle}
                           description={localDescription}
                           anonymousVotes={room.anonymousVotes || false}
+                          anonymousCards={room.anonymousCards || false}
                           onTitleChange={handleTitleChange}
                           onDescriptionChange={handleDescriptionChange}
                           onAnonymousVotesChange={handleAnonymousVotesChange}
+                          onAnonymousCardsChange={handleAnonymousCardsChange}
                           onTitleBlur={handleTitleBlur}
                           onDescriptionBlur={handleDescriptionBlur}
                         />

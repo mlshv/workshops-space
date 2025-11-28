@@ -18,7 +18,7 @@ type Message =
   | { type: 'update-input-text'; inputHeader?: string; inputDescription?: string }
   | { type: 'set-timer'; durationMinutes: number }
   | { type: 'clear-timer' }
-  | { type: 'update-workshop-info'; workshopTitle?: string; workshopDescription?: string; anonymousVotes?: boolean }
+  | { type: 'update-workshop-info'; workshopTitle?: string; workshopDescription?: string; anonymousVotes?: boolean; anonymousCards?: boolean }
   | { type: 'set-ready'; userId: string; ready: boolean }
 
 type User = {
@@ -75,6 +75,7 @@ type RoomState = {
   workshopTitle?: string
   workshopDescription?: string
   anonymousVotes?: boolean
+  anonymousCards?: boolean
 }
 
 export default class Server implements Party.Server {
@@ -314,6 +315,9 @@ export default class Server implements Party.Server {
           }
           if (data.anonymousVotes !== undefined) {
             state.anonymousVotes = data.anonymousVotes
+          }
+          if (data.anonymousCards !== undefined) {
+            state.anonymousCards = data.anonymousCards
           }
 
           await this.room.storage.put('state', state)

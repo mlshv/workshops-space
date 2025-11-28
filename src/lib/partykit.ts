@@ -167,6 +167,7 @@ export class RoomConnection {
     workshopTitle?: string
     workshopDescription?: string
     anonymousVotes?: boolean
+    anonymousCards?: boolean
   }) {
     this.sendMessage({
       type: 'update-workshop-info',

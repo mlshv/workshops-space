@@ -46,6 +46,7 @@ export type Room = {
   workshopTitle?: string
   workshopDescription?: string
   anonymousVotes?: boolean
+  anonymousCards?: boolean
 }
 
 export type AISummary = {
