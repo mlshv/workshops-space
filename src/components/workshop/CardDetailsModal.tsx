@@ -6,6 +6,28 @@ import type { Vote, User } from '@/types/workshop'
 import type { AggregatedScore } from '@/lib/aggregateVotes'
 import { UserAvatar } from './UserAvatar'
 import { toFixed } from '@/lib/to-fixed'
+import { normalize } from '@/lib/normalize'
+
+// Helper function to interpolate color based on score value (1-10)
+// 1 = green (good/easy)
+// 5 = yellow (medium)
+// 10 = red (bad/hard)
+function getVoteColor(value: number): string {
+  // Normalize value from range [1, 10] to [0, 1]
+  // 1 -> 0 (green), 5 -> ~0.44 (yellow), 10 -> 1 (red)
+  const normalizedValue = normalize(value, 1, 10, 0, 1)
+
+  // Interpolate between green (0) -> yellow (0.5) -> red (1)
+  if (normalizedValue < 0.5) {
+    // Green to Yellow
+    const t = normalizedValue * 2 // [0, 1] range for green to yellow
+    return `rgb(${Math.round(122 + 133 * t)}, ${Math.round(224 - 24 * t)}, ${Math.round(84 - 44 * t)})`
+  } else {
+    // Yellow to Red
+    const t = (normalizedValue - 0.5) * 2 // [0, 1] range for yellow to red
+    return `rgb(${Math.round(255 - 35 * t)}, ${Math.round(200 - 162 * t)}, ${Math.round(40 - 2 * t)})`
+  }
+}
 
 type CardDetailsModalProps = {
   open: boolean
@@ -112,43 +134,94 @@ export function CardDetailsModal({
                         <h4 className="mb-3">Voting statistics</h4>
 
                         {/* Aggregated Scores */}
-                        <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="flex flex-col gap-3 mb-4">
+                          {/* Importance Card */}
                           <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Avg. Importance
-                            </div>
-                            <div className="text-lg font-medium">
-                              {toFixed(voteData.aggregated.importance, 1)}
+                            <h5 className="mb-2">Importance</h5>
+                            <div className="flex gap-6 justify-between">
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Min
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(
+                                    Math.min(...voteData.votes.map(v => v.importance)),
+                                    1
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Max
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(
+                                    Math.max(...voteData.votes.map(v => v.importance)),
+                                    1
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Average
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(voteData.aggregated.importance, 1)}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Spread
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(voteData.aggregated.importanceSpread, 1)}
+                                </div>
+                              </div>
                             </div>
                           </div>
+
+                          {/* Complexity Card */}
                           <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Avg. Complexity
-                            </div>
-                            <div className="text-lg font-medium">
-                              {toFixed(voteData.aggregated.complexity, 1)}
-                            </div>
-                          </div>
-                          <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Importance Spread
-                            </div>
-                            <div className="text-lg font-medium">
-                              {toFixed(
-                                voteData.aggregated.importanceSpread,
-                                1,
-                              )}
-                            </div>
-                          </div>
-                          <div className="bg-secondary rounded px-3 py-2">
-                            <div className="text-xs text-muted-foreground mb-1">
-                              Complexity Spread
-                            </div>
-                            <div className="text-lg font-medium">
-                              {toFixed(
-                                voteData.aggregated.complexitySpread,
-                                1,
-                              )}
+                            <h5 className="mb-2">Complexity</h5>
+                            <div className="flex gap-6 justify-between">
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Min
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(
+                                    Math.min(...voteData.votes.map(v => v.complexity)),
+                                    1
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Max
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(
+                                    Math.max(...voteData.votes.map(v => v.complexity)),
+                                    1
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Average
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(voteData.aggregated.complexity, 1)}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <div className="text-xs text-muted-foreground">
+                                  Spread
+                                </div>
+                                <div className="text-lg font-medium">
+                                  {toFixed(voteData.aggregated.complexitySpread, 1)}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -179,9 +252,33 @@ export function CardDetailsModal({
                                         {user?.name || 'Unknown'}
                                       </div>
                                     </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      Importance: {toFixed(vote.importance, 1)} • Complexity:{' '}
-                                      {toFixed(vote.complexity, 1)}
+                                    <div className="flex flex-col gap-1 items-end text-xs">
+                                      <div className="flex items-center gap-1">
+                                        <span>Importance:</span>
+                                        <div className="h-4 w-16 rounded-lg bg-secondary overflow-hidden">
+                                          <div
+                                            className="h-full rounded-lg transition-all"
+                                            style={{
+                                              width: `${normalize(vote.importance, 0, 10, 0, 100)}%`,
+                                              backgroundColor: getVoteColor(vote.importance),
+                                            }}
+                                          />
+                                        </div>
+                                        <span className="font-mono text-xs">{vote.importance.toFixed(1)}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <span>Complexity:</span>
+                                        <div className="h-4 w-16 rounded-lg bg-secondary overflow-hidden">
+                                          <div
+                                            className="h-full rounded-lg transition-all"
+                                            style={{
+                                              width: `${normalize(vote.complexity, 0, 10, 0, 100)}%`,
+                                              backgroundColor: getVoteColor(vote.complexity),
+                                            }}
+                                          />
+                                        </div>
+                                        <span className="font-mono text-xs">{vote.complexity.toFixed(1)}</span>
+                                      </div>
                                     </div>
                                   </div>
                                 )
