@@ -5,12 +5,16 @@ import { setAdminRoomId } from '@/lib/user'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
 import { PlusIcon } from '@phosphor-icons/react'
+import { useAuth } from '@/hooks/useAuth'
+import { SignInButton } from '@/components/auth/SignInButton'
+import { UserMenu } from '@/components/auth/UserMenu'
 
 export const Route = createFileRoute('/')({ component: HomePage })
 
 function HomePage() {
   const navigate = useNavigate()
   const [roomCode, setRoomCode] = useState('')
+  const { isPending, isAuthenticated } = useAuth()
 
   const handleJoin = () => {
     if (roomCode.trim()) {
@@ -38,6 +42,14 @@ function HomePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        {isPending ? null : isAuthenticated ? (
+          <UserMenu />
+        ) : (
+          <SignInButton />
+        )}
+      </div>
+
       <div className="max-w-md w-full space-y-6">
         {/* <h1 className="text-4xl text-center">Workshop</h1> */}
 

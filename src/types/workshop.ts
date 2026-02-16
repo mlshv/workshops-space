@@ -29,6 +29,7 @@ export type User = {
   cardColor?: string
   colorIndex: number
   ready?: boolean
+  isAnonymous?: boolean
 }
 
 export type WorkshopStep = 'waiting' | 'input' | 'voting' | 'results'

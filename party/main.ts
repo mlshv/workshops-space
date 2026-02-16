@@ -20,6 +20,7 @@ type Message =
   | { type: 'clear-timer' }
   | { type: 'update-workshop-info'; workshopTitle?: string; workshopDescription?: string; anonymousVotes?: boolean; anonymousCards?: boolean }
   | { type: 'set-ready'; userId: string; ready: boolean }
+  | { type: 'update-user'; oldUserId: string; user: User }
 
 type User = {
   id: string
@@ -334,6 +335,109 @@ export default class Server implements Party.Server {
             await this.room.storage.put('state', state)
             this.room.broadcast(JSON.stringify({ type: 'state', state }))
           }
+          break
+        }
+
+        case 'update-user': {
+          if (!state) {
+            sender.send(JSON.stringify({ type: 'update-user-result', success: false, error: 'No room state' }))
+            break
+          }
+
+          const { oldUserId, user: newUser } = data
+          if (!oldUserId || !newUser?.id) {
+            sender.send(JSON.stringify({ type: 'update-user-result', success: false, error: 'Invalid payload' }))
+            break
+          }
+
+          // No-op if same user
+          if (oldUserId === newUser.id) {
+            sender.send(JSON.stringify({ type: 'update-user-result', success: true }))
+            break
+          }
+
+          // Check if old user is referenced anywhere
+          const oldUserIdx = state.users.findIndex((u) => u.id === oldUserId)
+          const oldInCards = state.cards.some((c) => c.authorId === oldUserId)
+          const oldInVotes = state.cards.some((c) => c.votes.some((v) => v.userId === oldUserId))
+          const oldIsAdmin = state.adminId === oldUserId
+
+          if (oldUserIdx === -1 && !oldInCards && !oldInVotes && !oldIsAdmin) {
+            sender.send(JSON.stringify({ type: 'update-user-result', success: false, error: 'Old user not found' }))
+            break
+          }
+
+          // Preserve color metadata from old user
+          const oldUser = oldUserIdx >= 0 ? state.users[oldUserIdx] : null
+          const mergedUser: User = {
+            ...newUser,
+            colorIndex: oldUser?.colorIndex ?? newUser.colorIndex,
+            color: oldUser?.color ?? newUser.color,
+            cardColor: oldUser?.cardColor ?? newUser.cardColor,
+          }
+
+          // Check if new user already exists in room
+          const newUserIdx = state.users.findIndex((u) => u.id === newUser.id)
+
+          if (newUserIdx >= 0) {
+            // Merge: transfer cards and votes from old to new, deduplicate
+            state.cards.forEach((card) => {
+              if (card.authorId === oldUserId) {
+                card.authorId = newUser.id
+              }
+              // Deduplicate votes: if both old and new voted on same card, keep newer
+              const oldVoteIdx = card.votes.findIndex((v) => v.userId === oldUserId)
+              const newVoteIdx = card.votes.findIndex((v) => v.userId === newUser.id)
+
+              if (oldVoteIdx >= 0 && newVoteIdx >= 0) {
+                // Both voted — keep the one with higher timestamp
+                if (card.votes[oldVoteIdx].timestamp > card.votes[newVoteIdx].timestamp) {
+                  card.votes[newVoteIdx] = { ...card.votes[oldVoteIdx], userId: newUser.id }
+                }
+                card.votes.splice(oldVoteIdx, 1)
+              } else if (oldVoteIdx >= 0) {
+                card.votes[oldVoteIdx].userId = newUser.id
+              }
+            })
+
+            // Remove old user entry
+            if (oldUserIdx >= 0) {
+              state.users.splice(oldUserIdx, 1)
+            }
+            // Update existing new user with preserved colors
+            const updatedIdx = state.users.findIndex((u) => u.id === newUser.id)
+            if (updatedIdx >= 0) {
+              state.users[updatedIdx] = { ...state.users[updatedIdx], ...mergedUser }
+            }
+          } else {
+            // New user doesn't exist — replace old user entry
+            if (oldUserIdx >= 0) {
+              state.users[oldUserIdx] = mergedUser
+            } else {
+              state.users.push(mergedUser)
+            }
+
+            // Update references in cards and votes
+            state.cards.forEach((card) => {
+              if (card.authorId === oldUserId) {
+                card.authorId = newUser.id
+              }
+              card.votes.forEach((vote) => {
+                if (vote.userId === oldUserId) {
+                  vote.userId = newUser.id
+                }
+              })
+            })
+          }
+
+          // Update adminId if needed
+          if (state.adminId === oldUserId) {
+            state.adminId = newUser.id
+          }
+
+          await this.room.storage.put('state', state)
+          sender.send(JSON.stringify({ type: 'update-user-result', success: true }))
+          this.room.broadcast(JSON.stringify({ type: 'state', state }))
           break
         }
       }

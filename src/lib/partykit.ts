@@ -135,6 +135,14 @@ export class RoomConnection {
     })
   }
 
+  updateUser(oldUserId: string, user: User) {
+    this.sendMessage({
+      type: 'update-user',
+      oldUserId,
+      user,
+    })
+  }
+
   deleteCard(cardId: string) {
     this.sendMessage({
       type: 'delete-card',

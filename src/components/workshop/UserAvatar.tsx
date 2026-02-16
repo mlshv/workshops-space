@@ -4,14 +4,30 @@ import { cn } from '@/lib/utils'
 type UserAvatarProps = {
   name: string
   color: string
+  avatar?: string
   size?: 'sm' | 'base'
   className?: string
 }
 
-export function UserAvatar({ name, color, size = 'base', className }: UserAvatarProps) {
+export function UserAvatar({ name, color, avatar, size = 'base', className }: UserAvatarProps) {
   const sizeClasses = {
     sm: 'w-6 h-6 text-sm',
     base: 'w-8 h-8 text-lg',
+  }
+
+  if (avatar) {
+    return (
+      <img
+        src={avatar}
+        alt={name}
+        className={cn(
+          'rounded-full object-cover',
+          sizeClasses[size],
+          className,
+        )}
+        referrerPolicy="no-referrer"
+      />
+    )
   }
 
   return (

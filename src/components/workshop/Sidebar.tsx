@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { UserAvatar } from './UserAvatar'
 import type { RoomConnection } from '@/lib/partykit'
 import { Button } from '../button'
-import { GearIcon, CheckIcon } from '@phosphor-icons/react'
+import { GearIcon, CheckIcon, GoogleLogoIcon } from '@phosphor-icons/react'
+import { useAuth } from '@/hooks/useAuth'
 
 type SidebarProps = {
   users: User[]
@@ -32,6 +33,7 @@ export function Sidebar({
   onSettingsClick,
 }: SidebarProps) {
   const [tooltipUserId, setTooltipUserId] = useState<string | null>(null)
+  const { isAnonymous, signInWithGoogle } = useAuth()
 
   // Calculate stats for each user
   const getUserStats = (userId: string) => {
@@ -72,7 +74,12 @@ export function Sidebar({
           >
             <Popover.Trigger className="cursor-default">
               <div className="relative py-1 px-2">
-                <UserAvatar name={user.name} color={user.color || 'var(--color-sticky-note-yellow)'} size="base" />
+                <UserAvatar
+                  name={user.name}
+                  color={user.color || 'var(--color-sticky-note-yellow)'}
+                  avatar={user.avatar}
+                  size="base"
+                />
                 {showVoteProgress && (
                   <div className="absolute -bottom-1 left-6 bg-foreground text-background text-xxs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
                     {stats.votedCards}/{stats.totalCards}
@@ -106,6 +113,16 @@ export function Sidebar({
                       Voted: {stats.votedCards}/{stats.totalCards}
                     </div>
                   </div>
+                  {user.id === currentUserId && isAnonymous && (
+                    <Button
+                      variant="inverse"
+                      onClick={signInWithGoogle}
+                      className="gap-1.5 flex items-center"
+                    >
+                      <GoogleLogoIcon className="size-3.5" weight="bold" />
+                      Sign in with Google
+                    </Button>
+                  )}
                   {user.id === currentUserId && onLogout && (
                     <Button variant="inverse" onClick={onLogout}>
                       Logout

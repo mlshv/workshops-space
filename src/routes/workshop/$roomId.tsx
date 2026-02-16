@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { connectRoom, disconnectRoom } from '@/lib/partykit'
-import { getUser, getAdminRoomId, logout } from '@/lib/user'
+import { getAdminRoomId, getLegacyUser, clearLegacyUser, logout } from '@/lib/user'
+import { useAuth } from '@/hooks/useAuth'
 import type {
   RoomState,
   Card,
@@ -25,6 +26,7 @@ export const Route = createFileRoute('/workshop/$roomId')({
 function WorkshopPage() {
   const { roomId } = Route.useParams()
   const navigate = useNavigate()
+  const { user: authUser, isPending: authPending, session, signInAnonymous } = useAuth()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [roomState, setRoomState] = useState<RoomState | null>(null)
@@ -33,27 +35,72 @@ function WorkshopPage() {
   > | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
+  // Track previous user ID for identity migration
+  const previousUserIdRef = useRef<string | null>(null)
+  const hasInitializedRef = useRef(false)
+  const legacyUserRef = useRef<User | null>(null)
+
+  // On mount, check for legacy localStorage user before auth kicks in
   useEffect(() => {
-    const user = getUser()
+    const legacy = getLegacyUser()
+    if (legacy) {
+      legacyUserRef.current = legacy
+    }
+  }, [])
+
+  // Auto-create anonymous session if no session exists
+  useEffect(() => {
+    if (!authPending && !session && !hasInitializedRef.current) {
+      hasInitializedRef.current = true
+      signInAnonymous()
+    }
+  }, [authPending, session, signInAnonymous])
+
+  // Main effect: connect to room when auth user is available
+  useEffect(() => {
+    if (!authUser) return
+
     const admin = getAdminRoomId() === roomId
-    setCurrentUser(user)
+    setCurrentUser(authUser)
     setIsAdmin(admin)
 
     const conn = connectRoom(roomId)
     setConnection(conn)
 
+    const legacyUser = legacyUserRef.current
+
     const unsubscribe = conn.subscribe((state) => {
       if (state) {
         setRoomState(state)
-        if (!state.users.some((u) => u.id === user.id)) {
-          conn.addUser(user)
+
+        // Check if legacy user needs migration
+        if (legacyUser) {
+          const legacyInRoom = state.users.some((u) => u.id === legacyUser.id) ||
+            state.cards.some((c) => c.authorId === legacyUser.id) ||
+            state.adminId === legacyUser.id
+
+          if (legacyInRoom && legacyUser.id !== authUser.id) {
+            // Migrate legacy identity to new auth identity
+            conn.updateUser(legacyUser.id, authUser)
+            if (state.adminId === legacyUser.id) {
+              setIsAdmin(true)
+            }
+          } else if (!state.users.some((u) => u.id === authUser.id)) {
+            // Legacy user not in room, just add as new user
+            conn.addUser(authUser)
+          }
+          // Clear legacy user after handling
+          clearLegacyUser()
+          legacyUserRef.current = null
+        } else if (!state.users.some((u) => u.id === authUser.id)) {
+          conn.addUser(authUser)
         }
       } else if (state === null) {
         const initialState: RoomState = {
           id: roomId,
           cards: [],
-          users: [user],
-          adminId: admin ? user.id : '',
+          users: [authUser],
+          adminId: admin ? authUser.id : '',
           step: 'waiting',
         }
         conn.sendMessage({
@@ -66,9 +113,31 @@ function WorkshopPage() {
     return () => {
       unsubscribe()
     }
-  }, [roomId])
+  }, [roomId, authUser])
 
-  if (!roomState || !connection || !currentUser) {
+  // Handle identity transition when user signs in with Google mid-session
+  useEffect(() => {
+    if (!authUser || !connection || !roomState) return
+
+    const prevId = previousUserIdRef.current
+    if (prevId && prevId !== authUser.id) {
+      // User identity changed (e.g., anonymous -> Google)
+      const prevInRoom = roomState.users.some((u) => u.id === prevId) ||
+        roomState.cards.some((c) => c.authorId === prevId) ||
+        roomState.adminId === prevId
+
+      if (prevInRoom) {
+        connection.updateUser(prevId, authUser)
+        if (roomState.adminId === prevId) {
+          setIsAdmin(true)
+        }
+      }
+    }
+    previousUserIdRef.current = authUser.id
+    setCurrentUser(authUser)
+  }, [authUser, connection, roomState])
+
+  if (authPending || !roomState || !connection || !currentUser) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 h-screen p-6">
         <SmallAppleSpinner className="size-6 text-foreground/50" />
