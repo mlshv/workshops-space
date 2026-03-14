@@ -5,6 +5,7 @@ import { MatrixCard } from './MatrixCard'
 import { InsightsSection } from './InsightsSection'
 import { ItemsTable } from './ItemsTable'
 import { AISummary } from './AISummary'
+import { DecisionsSection } from './DecisionsSection'
 import { aggregateVotes, type AggregatedScore } from '@/lib/aggregateVotes'
 import { normalize } from '@/lib/normalize'
 import type { RoomConnection } from '@/lib/partykit'
@@ -112,6 +113,8 @@ export default function ResultsMatrix({
           <AISummary room={room} connection={connection} isAdmin={isAdmin} />
         </div>
       </div>
+
+      <DecisionsSection positions={positions} room={room} />
     </div>
   )
 }

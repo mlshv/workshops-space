@@ -13,9 +13,12 @@ import {
   CaretDownIcon,
   CheckIcon,
   CaretUpDownIcon,
-  DownloadSimpleIcon,
+  CrownIcon,
+  XIcon,
 } from '@phosphor-icons/react'
 import { Select } from '@base-ui-components/react/select'
+import { Dialog } from '@base-ui-components/react/dialog'
+import { motion, AnimatePresence } from 'motion/react'
 import type {
   Card,
   RoomState,
@@ -28,6 +31,7 @@ import { UserAvatar } from './UserAvatar'
 import { cn } from '@/lib/utils'
 import type { RoomConnection } from '@/lib/partykit'
 import { CardDetailsModal } from './CardDetailsModal'
+import { trackEvent } from '@/lib/analytics'
 
 type ItemsTableProps = {
   positions: Array<{
@@ -170,9 +174,21 @@ const createColumns = (
 export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
+  const [premiumOpen, setPremiumOpen] = useState(false)
 
   const handleTextClick = (cardId: string) => {
     setSelectedCardId(cardId)
+  }
+
+  const handlePremiumClick = () => {
+    trackEvent('premium_button_click', room.id)
+    setPremiumOpen(true)
+  }
+
+  const handleSupportClick = () => {
+    trackEvent('premium_support_click', room.id)
+    setPremiumOpen(false)
+    handleExportCSV()
   }
 
   const handleExportCSV = () => {
@@ -319,14 +335,17 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           </tbody>
           <tfoot className="bg-foreground/5 border-t border-border">
             <tr>
-              <td colSpan={table.getAllColumns().length} className="px-2">
+              <td colSpan={table.getAllColumns().length} className="px-2 py-1.5">
                 <div className="flex justify-end">
                   <button
-                    onClick={handleExportCSV}
-                    className="p-1.5 text-foreground/50 hover:text-foreground clickable"
-                    title="Export to CSV"
+                    onClick={handlePremiumClick}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-white clickable"
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    }}
                   >
-                    <DownloadSimpleIcon className="size-4" weight="bold" />
+                    <CrownIcon className="size-3.5" weight="fill" />
+                    Premium
                   </button>
                 </div>
               </td>
@@ -349,6 +368,99 @@ export function ItemsTable({ positions, room, connection }: ItemsTableProps) {
           }}
         />
       )}
+
+      <Dialog.Root open={premiumOpen} onOpenChange={setPremiumOpen}>
+        <Dialog.Portal>
+          <AnimatePresence>
+            {premiumOpen && (
+              <>
+                <Dialog.Backdrop
+                  render={({
+                    onDrag,
+                    onDragStart,
+                    onDragEnd,
+                    onAnimationStart,
+                    ...props
+                  }) => (
+                    <motion.div
+                      {...props}
+                      initial={{ opacity: 0, backdropFilter: 'blur(0px)' }}
+                      animate={{ opacity: 1, backdropFilter: 'blur(4px)' }}
+                      exit={{
+                        opacity: 0,
+                        backdropFilter: 'blur(0px)',
+                        pointerEvents: 'none',
+                      }}
+                      className="fixed inset-0 bg-black/50 z-[400]"
+                    />
+                  )}
+                />
+                <Dialog.Popup
+                  render={({
+                    onDrag,
+                    onDragStart,
+                    onDragEnd,
+                    onAnimationStart,
+                    ...props
+                  }) => (
+                    <motion.div
+                      {...props}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 30,
+                      }}
+                      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-[500] w-[90vw] max-w-sm"
+                    >
+                      <Dialog.Close className="absolute top-3 right-3 hover:scale-110 active:scale-95 transition-scale duration-100 cursor-pointer">
+                        <XIcon className="w-4 h-4" />
+                      </Dialog.Close>
+
+                      <div className="p-6 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <CrownIcon className="size-5 text-purple-500" weight="fill" />
+                          <Dialog.Title className="text-lg font-medium">
+                            Premium Export
+                          </Dialog.Title>
+                        </div>
+
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          <p>Everything is free to use</p>
+                          <p>Export costs us a little money to manage the database</p>
+                          <p className="font-medium text-foreground">
+                            Support us by purchasing lifetime access for $10
+                          </p>
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={() => setPremiumOpen(false)}
+                            className="flex-1 px-3 py-2 text-sm rounded border border-border text-muted-foreground clickable transition-colors duration-150"
+                          >
+                            Mb Later
+                          </button>
+                          <button
+                            onClick={handleSupportClick}
+                            className="flex-1 px-3 py-2 text-sm rounded font-medium text-white clickable"
+                            style={{
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            }}
+                          >
+                            Support
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                />
+              </>
+            )}
+          </AnimatePresence>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
