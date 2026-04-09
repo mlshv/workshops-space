@@ -42,6 +42,8 @@ function HomePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      <img src="/logo.jpg" alt="drag together" className="absolute top-[24px] left-[24px] w-[200px]" />
+
       <div className="absolute top-4 right-4">
         {isPending ? null : isAuthenticated ? (
           <UserMenu />
@@ -51,10 +53,6 @@ function HomePage() {
       </div>
 
       <div className="max-w-md w-full space-y-6">
-        <div className="flex justify-center">
-          <img src="/logo.jpg" alt="drag together" className="w-64" />
-        </div>
-
         <div className="space-y-4">
           <Button
             size="lg"
