@@ -51,7 +51,9 @@ function HomePage() {
       </div>
 
       <div className="max-w-md w-full space-y-6">
-        {/* <h1 className="text-4xl text-center">Workshop</h1> */}
+        <div className="flex justify-center">
+          <img src="/logo.jpg" alt="drag together" className="w-64" />
+        </div>
 
         <div className="space-y-4">
           <Button
